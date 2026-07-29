@@ -1,0 +1,48 @@
+# Git hooks. Install with `pnpm install` (the `prepare` script runs
+# `lefthook install`) or `pnpm exec lefthook install`.
+#
+# Everything here also runs in CI. The hooks exist to make the feedback
+# immediate, not to be the only place a check happens.
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: rustfmt
+      glob: '*.rs'
+      run: cargo fmt --all -- --check
+      fail_text: 'run `cargo fmt --all`'
+
+    - name: clippy
+      glob: '*.{rs,toml}'
+      run: cargo clippy --all-targets --all-features -- -D warnings
+
+    - name: oxfmt
+      glob: '*.{js,mjs,cjs,ts,mts,cts,jsx,tsx,json,jsonc}'
+      run: pnpm exec oxfmt --check {staged_files}
+      fail_text: 'run `pnpm fmt`'
+
+    - name: oxlint
+      glob: '*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'
+      run: pnpm exec oxlint --deny-warnings {staged_files}
+
+    # The zero-`-sys`-crate property is what makes the wide os/arch matrix
+    # affordable (hard rule 4), and it is lost one careless dependency at a
+    # time. Catch it at the commit that adds it.
+    - name: no-sys-crates
+      glob: '*.{toml,lock}'
+      run: ./scripts/check-no-sys-crates.sh
+
+pre-push:
+  parallel: true
+  jobs:
+    - name: cargo-test
+      run: cargo test --all-features
+
+    - name: licenses
+      glob: '*.{toml,lock}'
+      run: cargo deny check licenses
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: pnpm exec commitlint --edit {1}
