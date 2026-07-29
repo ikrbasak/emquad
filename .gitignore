@@ -1,0 +1,6 @@
+target/
+node_modules/
+*.node
+dist/
+.turbo/
+.DS_Store
