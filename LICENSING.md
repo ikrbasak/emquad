@@ -25,7 +25,7 @@ Two obligations in particular:
 | Check | Command | Runs |
 |---|---|---|
 | License allow-list | `cargo deny check licenses` | pre-push, CI, release |
-| Attribution file | `pnpm licenses` | CI verifies it is current |
+| Attribution file | `pnpm notices` | CI verifies it is current |
 | No `-sys` crates | `./scripts/check-no-sys-crates.sh` | pre-commit, CI |
 
 Install the tools once:
@@ -108,7 +108,9 @@ fonts never take on any of it.
 
 1. Run `cargo deny check licenses`. If it fails, read the license before
    touching the allow-list.
-2. Run `pnpm licenses` and commit the regenerated `THIRD-PARTY-NOTICES.md`.
+2. Run `pnpm notices` and commit the regenerated `THIRD-PARTY-NOTICES.md`.
 3. Confirm `./scripts/check-no-sys-crates.sh` still passes — a `-sys` crate
    usually means a C toolchain, which breaks the cross-compile matrix
-   (hard rule 4).
+   (hard rule 4). Exactly two are allowed, both bindings-only with no C build
+   step: `windows-sys`, and `napi-sys`, which resolves N-API symbols against the
+   host Node binary at load time.

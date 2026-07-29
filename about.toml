@@ -1,7 +1,7 @@
 # cargo-about — generates THIRD-PARTY-NOTICES.md.
 #
 #   cargo install cargo-about --locked --features cli
-#   pnpm licenses
+#   pnpm notices
 #
 # Every dependency is statically linked into the shipped `.node` binary, so its
 # attribution has to ship with the package. The generated file is committed so a
@@ -19,6 +19,8 @@ accepted = [
   "BSD-3-Clause",
   "BSL-1.0",
   "CC0-1.0",
+  # `libloading`, via napi's `dyn-symbols`.
+  "ISC",
   "Unicode-3.0",
   "Unlicense",
   "Zlib",
