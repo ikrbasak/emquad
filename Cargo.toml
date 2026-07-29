@@ -1,0 +1,45 @@
+[workspace]
+members = ["crates/emquad-engine"]
+resolver = "2"
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/ikrbasak/emquad"
+rust-version = "1.85"
+
+# Typst is pre-1.0 and breaks across minor releases — `FileId::new` and
+# `VirtualPath::new` both changed in 0.15. Pin exact versions (hard rule 5).
+[workspace.dependencies]
+typst = "=0.15.1"
+typst-layout = "=0.15.1"
+typst-pdf = "=0.15.1"
+typst-assets = "=0.15.1"
+comemo = "0.5"
+rayon = "1"
+
+[workspace.lints.rust]
+# Nothing in this workspace needs `unsafe`, and a napi binding is exactly the
+# place where a stray `unsafe` block would be hardest to review.
+unsafe_code = "forbid"
+unused_qualifications = "warn"
+missing_debug_implementations = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+dbg_macro = "warn"
+todo = "warn"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+opt-level = 3
+# Never `panic = "abort"`: it disables `catch_unwind`, which hard rule 2 depends
+# on. Typst's `FileId` interner panics via `expect`, and an uncaught panic
+# crossing into Node aborts the process.
+panic = "unwind"
+
+[profile.bench]
+inherits = "release"
