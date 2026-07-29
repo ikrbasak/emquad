@@ -78,7 +78,7 @@ pub struct CompilerBuilder {
 
 impl CompilerBuilder {
     pub fn new() -> Self {
-        Self { pin_rayon: true, ..Default::default() }
+        Self::default()
     }
 
     /// Register a font file. Returns `self` for chaining; unparsable data is
@@ -133,12 +133,11 @@ impl CompilerBuilder {
 
     /// Confine typst's internal rayon usage to the calling thread.
     ///
-    /// On by default, because unpinned typst under a saturated worker pool
-    /// collapsed to 0.46× in Phase 0. The default is not free: measured
-    /// single-threaded, pinning costs **12% on documents with many page runs**
-    /// and nothing at all on ordinary ones. Turn it off when compiles are
-    /// serial and documents re-configure the page often. See [`crate::rayon`]
-    /// for the numbers and the method.
+    /// **Off by default since Phase 2 measured it.** It was expected to rescue
+    /// the throughput collapse on documents with many page runs; under a real
+    /// worker pool it does not, while costing 15% at low concurrency. The
+    /// collapse is process-global contention that only process isolation
+    /// fixes. See [`crate::rayon`] for the numbers and what is still unknown.
     pub fn pin_rayon(mut self, pin: bool) -> Self {
         self.pin_rayon = pin;
         self

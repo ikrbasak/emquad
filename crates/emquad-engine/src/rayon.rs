@@ -11,35 +11,47 @@
 //! | Simple invoice | 3.71× at 4, then flat | same plateau |
 //! | 40 page runs | **0.46×** — worse than serial | 5.18× |
 //!
-//! Under a saturated pool, restricting typst to one rayon thread was worth up
-//! to **43%** on the multi-run shape. Our own pool supplies the parallelism
-//! (hard rule 9).
+//! Phase 0 concluded that restricting typst to one rayon thread was worth up
+//! to **43%** on the multi-run shape. Phase 2 measured it under a real worker
+//! pool and **could not reproduce any benefit at all**, so pinning is now
+//! **off by default**.
 //!
-//! # It is not free, and hard rule 9 overstates this
+//! # What Phase 2 measured
 //!
-//! That rule also says pinning is "never worse". Phase 1 measured otherwise.
-//! Single-threaded, one compile at a time, `scripts/benchcmp.sh` reports:
+//! `packages/binding/bench/poolcmp.sh`, release build, one configuration per
+//! process, order alternated across repetitions. Throughput in docs/s:
 //!
-//! | Document | Pinned | Unpinned |
-//! |---|---|---|
-//! | Invoice (1 page run) | 652 µs | 652 µs — no difference |
-//! | Multi-run (40 page runs) | 3,738 µs | **3,327 µs — 12% faster** |
+//! | Threads | multirun, pinned | multirun, unpinned | invoice, pinned | invoice, unpinned |
+//! |---|---|---|---|---|
+//! | 1 | 252 | **296** | 1313 | 1370 |
+//! | 2 | 216 | 230 | 2615 | 2632 |
+//! | 4 | **218** | 203 | 4031 | 4561 |
+//! | 8 | 113 | 114 | 4456 | 5310 |
 //!
-//! Three repetitions, alternating order, one configuration per process. The
-//! result is not an artifact: with a single compile in flight there is nothing
-//! to contend with, so letting rayon spread 40 page runs across idle cores is
-//! straightforwardly faster than forcing them onto one.
+//! Two things follow, and the second matters more.
 //!
-//! Phase 0's +43% was measured with *many* worker threads compiling at once,
-//! where typst's rayon oversubscribes on top of our pool. Both numbers are
-//! right; the rule needs the qualifier.
+//! 1. **Pinning has no consistent benefit.** It costs ~15% at one thread, wins
+//!    ~5% at four, and is a tie at eight. On ordinary documents it does nothing.
+//!    A knob with no reliable direction should not be on by default.
 //!
-//! The default stays on because the failure modes are asymmetric: unpinned
-//! under a saturated pool collapsed to **0.46×**, and 12% on an unusual
-//! document shape is much the smaller loss. **Phase 2 owns the final call** —
-//! it should re-measure pinned against unpinned under its own worker pool and
-//! set [`CompilerBuilder::pin_rayon`](crate::CompilerBuilder::pin_rayon)
-//! deliberately rather than inheriting this default.
+//! 2. **Rayon is not what makes multi-run documents collapse.** With typst
+//!    confined to a single rayon thread per worker — verified by the test below
+//!    — throughput still falls to **0.45×** at eight threads. Whatever the
+//!    contention is, it is not nested parallelism, and Phase 0 already pointed
+//!    at the likeliest culprit: `comemo`'s process-global cache. Separate
+//!    processes scaled to 5.18× on the same document.
+//!
+//! **So the fix for the collapse is process isolation, not rayon tuning.** That
+//! is the worker-process pool, and this measurement is the strongest argument
+//! for shipping it.
+//!
+//! # What is still unknown
+//!
+//! Phase 0's +43% was measured with `RAYON_NUM_THREADS=1`, which shrinks the
+//! *global* pool that every worker injects into. This crate pins differently —
+//! a private one-thread pool per worker, running inline. The two should be
+//! close, and are not. That gap is unexplained, and it is the reason this knob
+//! still exists rather than being deleted.
 //!
 //! # Why not `RAYON_NUM_THREADS`
 //!
