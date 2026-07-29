@@ -8,12 +8,17 @@
 # in TypeScript rather than in Rust. It is lost one careless dependency at a
 # time, so it is checked rather than remembered.
 #
-# `windows-sys` is allowed: it is a bindings-only crate with no C build step,
-# pulled in transitively on Windows targets by std-adjacent dependencies.
+# Two crates are allowed, both bindings-only with no C build step:
+#
+# * `windows-sys` — pulled in transitively on Windows targets by std-adjacent
+#   dependencies.
+# * `napi-sys` — declares the extern N-API symbols, which are resolved against
+#   the host Node binary at load time. No C library, no bindgen, no cmake. It is
+#   unavoidable for a Node addon and costs us nothing on the target matrix.
 
 set -euo pipefail
 
-ALLOWED='^windows-sys$'
+ALLOWED='^(windows-sys|napi-sys)$'
 
 offenders=$(
   cargo metadata --format-version 1 --all-features |

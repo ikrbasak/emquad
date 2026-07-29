@@ -1,0 +1,40 @@
+[package]
+name = "emquad-napi"
+description = "Node.js bindings for emquad-engine. Thin: threading and the JS boundary only."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+# A deliberate panic, so the testing strategy's "panics do not abort the
+# process" requirement can be proven from JS rather than asserted. Off by
+# default, so release builds do not carry it.
+test-hooks = []
+
+[dependencies]
+emquad-engine = { path = "../emquad-engine" }
+# `napi` pulls in `napi-sys`, the one exception to hard rule 4. It declares
+# extern symbols resolved against the host Node binary — no C library, no
+# bindgen, no cmake — so it does not cost us the cross-compile matrix.
+# `scripts/check-no-sys-crates.sh` allows it by name and explains why.
+# `napi9` is the Node-API level Node 22 guarantees, which is our floor. Default
+# features stay on for `dyn-symbols`: it resolves Node's symbols at load time
+# instead of linking against a `.lib`, which is what keeps Windows targets
+# buildable without the Node headers present.
+napi = { version = "3", features = ["napi9"] }
+napi-derive = "3"
+num_cpus = "1"
+
+[build-dependencies]
+napi-build = "2"
+
+[dev-dependencies]
+typst-assets = { workspace = true, features = ["fonts"] }

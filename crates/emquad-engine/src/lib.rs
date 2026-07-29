@@ -43,6 +43,10 @@
 //! successfully to a valid PDF with every text run dropped and zero
 //! diagnostics.** [`FontRegistryBuilder::build`] rejects it.
 
+// The pure core never needs `unsafe`, and this is stronger than the workspace's
+// `deny`: nothing here, not even a macro, can opt back in.
+#![forbid(unsafe_code)]
+
 pub mod cache;
 pub mod clock;
 mod compile;
