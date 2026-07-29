@@ -1,0 +1,38 @@
+[package]
+name = "emquad-engine"
+description = "Pure-Rust Typst compilation core for emquad. VFS in, PDF out."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+# No napi dependency, deliberately: this crate is testable with plain
+# `cargo test` and reusable from a wasm or CLI target without restructuring.
+#
+# Keep this list free of `-sys` crates. Zero `-sys` crates is what makes the
+# wide os/arch matrix affordable (hard rule 4); it is also why networking lives
+# in TypeScript rather than here.
+[dependencies]
+typst.workspace = true
+typst-layout.workspace = true
+typst-pdf.workspace = true
+comemo.workspace = true
+rayon.workspace = true
+
+[dev-dependencies]
+typst-assets = { workspace = true, features = ["fonts"] }
+# Already in the tree via typst; used only to build a `typst::foundations::Duration`
+# in clock tests, which has no constructor that avoids it.
+time = "0.3"
+
+[[bench]]
+name = "compile"
+harness = false
+
+[[bench]]
+name = "soak"
+harness = false
