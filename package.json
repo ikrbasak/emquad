@@ -7,10 +7,10 @@
     "fmt": "oxfmt . && cargo fmt --all",
     "fmt:check": "oxfmt --check . && cargo fmt --all -- --check",
     "lint": "oxlint --deny-warnings && cargo clippy --all-targets --all-features -- -D warnings",
-    "test": "cargo test",
+    "test": "cargo test && pnpm --filter @emquad/binding test",
     "bench": "cargo bench",
-    "licenses": "cargo deny check licenses && cargo about generate --output-file THIRD-PARTY-NOTICES.md about.hbs",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "notices": "cargo deny check licenses && cargo about generate --output-file THIRD-PARTY-NOTICES.md about.hbs"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",
@@ -20,7 +20,7 @@
     "oxlint": "^1.76.0"
   },
   "engines": {
-    "node": ">=20.19"
+    "node": ">=22"
   },
   "packageManager": "pnpm@11.17.0"
 }

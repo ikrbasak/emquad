@@ -1,0 +1,34 @@
+{
+  "name": "@emquad/binding",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "build": "napi build --manifest-path ../../crates/emquad-napi/Cargo.toml --package-json-path ./package.json --platform --esm --output-dir . --release",
+    "build:debug": "napi build --manifest-path ../../crates/emquad-napi/Cargo.toml --package-json-path ./package.json --platform --esm --output-dir .",
+    "build:test": "napi build --manifest-path ../../crates/emquad-napi/Cargo.toml --package-json-path ./package.json --platform --esm --output-dir . --features test-hooks",
+    "test": "npm run build:test && node --test \"test/*.test.js\""
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.8.0"
+  },
+  "napi": {
+    "binaryName": "emquad",
+    "targets": [
+      "aarch64-apple-darwin",
+      "x86_64-apple-darwin",
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "aarch64-unknown-linux-musl",
+      "x86_64-pc-windows-msvc",
+      "aarch64-pc-windows-msvc"
+    ]
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
