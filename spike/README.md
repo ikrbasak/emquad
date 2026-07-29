@@ -16,12 +16,12 @@ remember.
 | `phase0/src/bin/soak.rs` | **Superseded** by `crates/emquad-engine/benches/soak.rs` | now redundant — remove with the rest |
 | `phase0/src/bin/tagged.rs` | **Superseded** — covered by `untagged_output_is_smaller` and the `PdfSettings` tests | now redundant |
 | `phase0/src/bin/svgtext.rs` | **Superseded** — the finding is hard rule 8, enforced by `FontRegistryBuilder::build` | now redundant |
-| `phase0/src/bin/interner.rs` | Still the only probe that reaches typst's real 65,535 cap; `tests/interner_guard.rs` deliberately stops at *our* guard | Phase 2, once the napi layer proves `catch_unwind` holds |
-| `phase0/src/bin/runaway.rs` | Still the only harness for runaway compiles, pool wedging, and kill cost | **Phase 2** — promote into the worker-process pool's tests |
-| `phase0/src/bin/pool.rs` + `procsweep.sh` | Still the only thread-vs-process scaling comparison, which is the evidence behind the process pool | **Phase 2** |
+| `phase0/src/bin/interner.rs` | Still the only probe that reaches typst's real 65,535 cap; our guard deliberately stops short of it | **Superseded** — Phase 2 proved panic containment from JS with `__panicInPool`. Delete with the rest |
+| `phase0/src/bin/runaway.rs` | Still the only harness for runaway compiles, pool wedging, and kill cost | **Phase 3** — the worker-process pool moved there, so its tests did too |
+| `phase0/src/bin/pool.rs` + `procsweep.sh` | The thread-vs-process comparison. Phase 2 reproduced the *thread* half in `packages/binding/bench/pool.js`; the process half is still only here | **Phase 3**, once the process pool has its own benchmark |
 | `xtarget/` | Still the only record of the `CC`/`CFLAGS`/`AR` environment that got 13 of 14 targets cross-compiling | **Phase 4** — fold into the CI matrix |
 
-Once Phase 4 has a green matrix and Phase 2 has its own process-pool tests, delete
+Once Phase 4 has a green matrix and Phase 3 has its own process-pool tests, delete
 `spike/` entirely.
 
 ## `phase0/` — measurement probes

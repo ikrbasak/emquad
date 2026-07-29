@@ -8,7 +8,7 @@ The implementation plan is split across [`plan/`](plan/). Start with
 | — | [plan/00-overview.md](plan/00-overview.md) | Phases, sequencing, decisions, non-goals |
 | 0 | [plan/01-phase-0-spike.md](plan/01-phase-0-spike.md) | ~~Gate~~ **Done** → [results](discovery/08-phase-0-results.md) |
 | 1 | [plan/02-phase-1-rust-core.md](plan/02-phase-1-rust-core.md) | ~~`emquad-engine`~~ **Done** → [docs](phase-1/00-overview.md) |
-| 2 | [plan/03-phase-2-napi.md](plan/03-phase-2-napi.md) | `emquad-napi`: bindings, thread pool, eviction |
+| 2 | [plan/03-phase-2-napi.md](plan/03-phase-2-napi.md) | ~~`emquad-napi`~~ **Done** → [docs](phase-2/00-overview.md) |
 | 3 | [plan/04-phase-3-typescript.md](plan/04-phase-3-typescript.md) | `@emquad/core` + `@emquad/resolver`, ESM/TS |
 | 4 | [plan/05-phase-4-distribution.md](plan/05-phase-4-distribution.md) | Target matrix, prebuilds, release |
 | 5 | [plan/06-phase-5-docs-benchmarks.md](plan/06-phase-5-docs-benchmarks.md) | Puppeteer comparison, docs, launch |
@@ -47,5 +47,12 @@ It amends two more things: hard rule 9's "never worse" claim about rayon pinning
 single-threaded, and the default fonts carry four licenses rather than one — including
 GPL-3.0-or-later. Both in [`phase-1/03-findings.md`](phase-1/03-findings.md).
 
-**Start with [Phase 2](plan/03-phase-2-napi.md)**, after reading
-[`phase-1/05-handoff.md`](phase-1/05-handoff.md).
+**Phase 2 is complete.** `crates/emquad-napi` exposes the engine to Node with a dedicated
+thread pool, bounded backpressure, and pool-owned cache eviction. It **retracts hard rule 9**:
+pinning typst's rayon buys nothing under a real pool, which means the multi-run throughput
+collapse is process-global contention and only the worker-*process* pool can fix it. That pool
+moves to Phase 3, where Node can actually spawn processes. See
+[`phase-2/03-findings.md`](phase-2/03-findings.md).
+
+**Start with [Phase 3](plan/04-phase-3-typescript.md)**, after reading
+[`phase-2/04-handoff.md`](phase-2/04-handoff.md).

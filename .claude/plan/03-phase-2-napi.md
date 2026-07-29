@@ -1,5 +1,23 @@
 # Phase 2 — napi Binding Layer (`emquad-napi`)
 
+> ## ✅ Complete
+>
+> Built and documented in [`../phase-2/`](../phase-2/00-overview.md). 64 Rust tests and 32 Node
+> tests pass.
+>
+> **Two deviations.** A failed compile is *returned* rather than thrown, because a promise
+> rejection cannot carry structured diagnostics — Phase 3 turns it into the `Error` subclass.
+> And the **worker-process pool moved to Phase 3**: process isolation needs Node to spawn the
+> process, and we ship an addon rather than an executable.
+>
+> **Hard rule 9 is retracted here.** Pinning typst's rayon buys nothing under a real pool, which
+> means the multi-run collapse is process-global contention — see
+> [`../phase-2/03-findings.md`](../phase-2/03-findings.md).
+>
+> The document below is the original brief, kept for context. Proceed to
+> [Phase 3](04-phase-3-typescript.md), starting with
+> [`../phase-2/04-handoff.md`](../phase-2/04-handoff.md).
+
 A **thin** layer. All logic belongs in `emquad-engine`; this crate handles the JS boundary,
 threading, and cache lifecycle only.
 
@@ -56,7 +74,9 @@ worker-process pool is now a deliverable rather than a maybe.
 
 - `Compiler` class with `compile()` / `compileSync()`
 - Configurable pool and eviction policy
-- **Worker-process pool** — reusable workers, not process-per-compile
+- ~~**Worker-process pool**~~ — **moved to Phase 3.** It needs Node to spawn and supervise the
+  child, since we ship a `.node` addon rather than an executable. Still a deliverable, and Phase
+  2's measurements made the case for it stronger
 - Structured error type with source locations
 - Zero-copy buffer output
 - Concurrency tests: parallel compiles produce byte-identical output to serial ones

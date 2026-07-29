@@ -8,7 +8,8 @@ resolution). The resolver touches no Rust and can be built in parallel with Phas
 **Full TypeScript, ESM-only.**
 
 - `"type": "module"`, `exports` map with `types` first.
-- Target modern Node (≥20). No CJS build, no dual-package hazard.
+- Target **Node ≥ 22** — the project floor, and what the binding is built against. No CJS
+  build, no dual-package hazard.
 - Declaration files generated from source, not hand-written.
 - `strict: true`, plus `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`.
 
@@ -60,9 +61,13 @@ it must be explicitly named and loudly documented.
 
 **No `timeout` option.** See [Phase 2](03-phase-2-napi.md#24-explicitly-not-implemented).
 
-**Errors are structured.** A `TypstError` subclass exposing `file`, `line`, `column`,
+**Errors are structured.** An `EmquadError` subclass exposing `code`, `file`, `line`, `column`,
 `severity`, and `hints` as real fields — not a formatted string. Warnings are returned
 alongside successful output, not discarded.
+
+Constructing it is Phase 3's job specifically: `@emquad/binding` **returns** compile failures
+rather than throwing, because a promise rejection can only carry a message and a status. See
+[`../phase-2/02-api-guide.md`](../phase-2/02-api-guide.md).
 
 ## `@emquad/resolver`
 
@@ -70,7 +75,9 @@ Implements the design in
 [`../discovery/04-packages-and-network.md`](../discovery/04-packages-and-network.md).
 
 - Fetch `https://packages.typst.org/preview/{name}-{version}.tar.gz`, gunzip (`node:zlib`),
-  untar, mount into the base VFS layer.
+  untar, mount into the base VFS layer. **Mount `typst.toml` too** — typst reads it to find the
+  entrypoint, and without it the import fails with a file-not-found error naming a file the
+  user never asked for (found in Phase 1).
 - Three-tier cache: memory → disk (`~/.cache/typst/packages/…`, shared with `typst-cli`) →
   network. **Never fetch per compile.**
 - Resolution modes: `auto`, `offline`, `vendor`.
@@ -92,6 +99,13 @@ text it depends on, and the required packaging test are all there.
 ## Deliverables
 
 - ESM-only, fully typed `@emquad/core` with `Compiler` + document builder
+- **Worker-process pool** — moved here from Phase 2, because spawning and supervising a process
+  is Node's job. Workers must be *reused*: process-per-compile is 11.2x slower. It answers two
+  problems at once — the multi-run throughput collapse (threads reach 0.46x where processes
+  reach 5.18x) and runaway templates, which have no other mitigation. See
+  [`../phase-2/04-handoff.md`](../phase-2/04-handoff.md)
+- `EmquadError` subclass built from the binding's returned failure — the binding cannot throw
+  structured diagnostics across a promise rejection
 - `@emquad/resolver` with disk cache, lockfile, and offline mode
 - `@emquad/fonts` with licenses
 - Clean-consumer ESM import smoke test in CI

@@ -1,12 +1,19 @@
-# Handoff to Phase 2
+# Handoff to Phase 2 — superseded
 
-Read this first if you are picking up the work. It is written for someone — human or agent —
-who has not seen the earlier conversation.
+> **Phase 2 is complete.** If you are picking up the work now, read
+> [`../phase-2/04-handoff.md`](../phase-2/04-handoff.md) instead.
+>
+> This document is kept because its footguns and constraints still apply, and because two of its
+> open questions are still open. Note that **its rayon conclusion is superseded**: Phase 2
+> measured pinning under a real pool and found no benefit, so hard rule 9 is retracted. See
+> [`../phase-2/03-findings.md`](../phase-2/03-findings.md).
+
+Written for someone — human or agent — who has not seen the earlier conversation.
 
 ## Where things stand
 
-Phase 0 (spike) and Phase 1 (Rust core) are complete. Phase 2 (`emquad-napi`) has not started.
-The brief is [`../plan/03-phase-2-napi.md`](../plan/03-phase-2-napi.md).
+Phase 0 (spike) and Phase 1 (Rust core) are complete. The brief for what came next is
+[`../plan/03-phase-2-napi.md`](../plan/03-phase-2-napi.md).
 
 `emquad-engine` compiles a VFS to a PDF, has 61 passing tests, and is ready to be wrapped. It
 has no napi dependency and should keep none — that separation is what lets the core be tested

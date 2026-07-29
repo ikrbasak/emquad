@@ -13,7 +13,7 @@ three process-global Typst behaviors dictate the API shape, and they are painful
 |---|---|---|
 | 0 | [01-phase-0-spike.md](01-phase-0-spike.md) | Empirical answers to 5 open questions. **Gate.** |
 | 1 | [02-phase-1-rust-core.md](02-phase-1-rust-core.md) | **Done.** `emquad-engine` → [`../phase-1/`](../phase-1/00-overview.md) |
-| 2 | [03-phase-2-napi.md](03-phase-2-napi.md) | `emquad-napi`: bindings, thread pool, eviction |
+| 2 | [03-phase-2-napi.md](03-phase-2-napi.md) | **Done.** `emquad-napi` → [`../phase-2/`](../phase-2/00-overview.md) |
 | 3 | [04-phase-3-typescript.md](04-phase-3-typescript.md) | `@emquad/core` TS API + package resolver |
 | 4 | [05-phase-4-distribution.md](05-phase-4-distribution.md) | CI matrix, prebuilds, release |
 | 5 | [06-phase-5-docs-benchmarks.md](06-phase-5-docs-benchmarks.md) | Puppeteer comparison, docs, launch |

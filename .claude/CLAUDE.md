@@ -4,16 +4,18 @@ A lean Node.js binding for [Typst](https://github.com/typst/typst) for PDF gener
 **VFS in → PDF out.** Positioned as a fast, light replacement for Chromium + Puppeteer PDF
 pipelines.
 
-**Status: Phases 0 and 1 complete. Phase 2 (`emquad-napi`) not started.**
-`crates/emquad-engine` compiles a VFS to a PDF; 61 tests pass.
+**Status: Phases 0, 1, and 2 complete. Phase 3 (TypeScript) not started.**
+`crates/emquad-engine` compiles a VFS to a PDF and `crates/emquad-napi` exposes it to Node;
+64 Rust tests and 32 Node tests pass.
 
 ## Orientation
 
 - [`PLAN.md`](PLAN.md) → [`plan/`](plan/) — the implementation plan, phased
 - [`discovery/`](discovery/00-overview.md) — Phase 0 research findings with evidence
-- [`phase-1/`](phase-1/00-overview.md) — what the Rust core is, how it works, and what it
-  measured. **[`phase-1/05-handoff.md`](phase-1/05-handoff.md) is where to start if you are
-  picking up Phase 2.**
+- [`phase-1/`](phase-1/00-overview.md) — the Rust core: architecture, API, findings
+- [`phase-2/`](phase-2/00-overview.md) — the napi layer and the thread pool.
+  **[`phase-2/04-handoff.md`](phase-2/04-handoff.md) is where to start if you are picking up
+  Phase 3.**
 
 **Read these three before writing any code:**
 
@@ -22,8 +24,11 @@ pipelines.
 - [`discovery/08-phase-0-results.md`](discovery/08-phase-0-results.md) — measured Phase 0
   results. It **corrects several claims** in the earlier research documents; where they
   disagree, it wins.
-- [`phase-1/03-findings.md`](phase-1/03-findings.md) — what Phase 1 measured. It **corrects hard
-  rule 9 and the font licensing** recorded elsewhere.
+- [`phase-2/03-findings.md`](phase-2/03-findings.md) — what Phase 2 measured. It **retracts hard
+  rule 9 outright**, and redirects the multi-run throughput collapse from rayon to process
+  isolation.
+- [`phase-1/03-findings.md`](phase-1/03-findings.md) — what Phase 1 measured, including the
+  font licensing correction behind rule 11.
 
 ## Packages
 
@@ -33,6 +38,7 @@ pipelines.
 | `@emquad/fonts` | Optional default Typst fonts (~9.3 MB; **four licenses, not just OFL** — see rule 11) |
 | `@emquad/resolver` | `@preview` registry resolver (TS — owns all networking) |
 | `@emquad/typst-binding-<platform>` | Prebuilt native bindings, one per target |
+| `@emquad/binding` | **Internal.** The napi addon and its generated bindings; not published |
 
 Rust crates: `emquad-engine` (pure core, no napi) and `emquad-napi` (thin binding layer).
 
@@ -74,15 +80,15 @@ difficult to diagnose.
    and emits a valid PDF with **every text run silently dropped — zero warnings**. Reject it at
    `Compiler` construction. Never let a font problem reach the user as a blank page.
 
-9. **Pin typst's internal rayon to 1 thread**, in-process — not via `RAYON_NUM_THREADS`, which
-   would also degrade a host app's own rayon use. Worth up to 43% on multi-page-run documents
-   *under a saturated pool*; our pool provides the parallelism.
-   **Corrected in Phase 1: it is not "never worse".** Measured single-threaded, pinning costs
-   **12% on multi-run documents** and nothing on ordinary ones — with one compile in flight
-   there is no contention to avoid, so spreading page runs across idle cores wins. The default
-   stays on because unpinned-under-load collapses to 0.46×, which is far worse than 12%.
-   Phase 2 must re-measure under its own pool rather than inherit the default.
-   See [`phase-1/03-findings.md`](phase-1/03-findings.md).
+9. **~~Pin typst's internal rayon to 1 thread.~~ Retracted in Phase 2 — do not do this.**
+   Phase 0 measured `RAYON_NUM_THREADS=1` as worth 29–43% on multi-page-run documents.
+   Phase 2 measured our in-process equivalent under a real worker pool and found **no benefit
+   at any pool size**, plus a ~15% cost at low concurrency. Pinning is now **off by default**.
+   More importantly, it establishes that **rayon is not what makes multi-run documents
+   collapse**: with typst confined to one rayon thread per worker, throughput still falls to
+   0.45× at eight threads. The contention is process-global — most likely `comemo` — so the
+   answer is the worker-*process* pool, not rayon tuning.
+   See [`phase-2/03-findings.md`](phase-2/03-findings.md).
 
 10. **Benchmarks that vary one option must use disjoint document ranges per configuration.**
     Otherwise whichever runs second harvests `comemo` hits from the first. This produced a
@@ -99,6 +105,7 @@ difficult to diagnose.
 
 - **TypeScript everywhere, ESM-only.** No CJS build. Native addons cannot be `import`ed
   directly — build with `napi build --platform --esm`.
+- **Node >= 22**, built against Node-API 9.
 - **emquad is MIT licensed.** Typst is Apache-2.0 and is statically linked, so
   `THIRD-PARTY-NOTICES.md` ships with the binary. See [`../LICENSING.md`](../LICENSING.md).
 - **Tooling:** rustfmt + clippy for Rust, oxfmt + oxlint for JS/TS, lefthook for git hooks,
