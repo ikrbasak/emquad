@@ -2,7 +2,23 @@
   "name": "@emquad/resolver",
   "version": "0.0.1",
   "description": "@preview package resolution for @emquad/core. Owns all networking.",
+  "keywords": [
+    "pdf",
+    "pdf-generation",
+    "preview",
+    "registry",
+    "resolver",
+    "typst",
+    "typst-packages"
+  ],
+  "homepage": "https://github.com/ikrbasak/emquad#readme",
+  "bugs": "https://github.com/ikrbasak/emquad/issues",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ikrbasak/emquad.git",
+    "directory": "packages/resolver"
+  },
   "files": [
     "dist",
     "README.md",

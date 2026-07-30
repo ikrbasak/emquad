@@ -1,7 +1,24 @@
 {
   "name": "@emquad/typst-binding",
   "version": "0.0.1",
+  "description": "Native bindings for @emquad/core. Not useful on its own.",
+  "keywords": [
+    "bindings",
+    "napi",
+    "napi-rs",
+    "native",
+    "pdf",
+    "pdf-generation",
+    "typst"
+  ],
+  "homepage": "https://github.com/ikrbasak/emquad#readme",
+  "bugs": "https://github.com/ikrbasak/emquad/issues",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ikrbasak/emquad.git",
+    "directory": "packages/binding"
+  },
   "files": [
     "index.js",
     "index.d.ts"

@@ -2,7 +2,26 @@
   "name": "@emquad/core",
   "version": "0.0.1",
   "description": "Typst PDF generation for Node. VFS in, PDF out.",
+  "keywords": [
+    "document-generation",
+    "html-to-pdf",
+    "invoice",
+    "napi-rs",
+    "pdf",
+    "pdf-generation",
+    "pdf-generator",
+    "puppeteer-alternative",
+    "report",
+    "typst"
+  ],
+  "homepage": "https://github.com/ikrbasak/emquad#readme",
+  "bugs": "https://github.com/ikrbasak/emquad/issues",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ikrbasak/emquad.git",
+    "directory": "packages/core"
+  },
   "files": [
     "dist",
     "README.md",
