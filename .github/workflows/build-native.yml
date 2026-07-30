@@ -1,0 +1,171 @@
+# Build the native addon for every shipping target.
+#
+# Reusable: CI calls it to prove the matrix still builds, and the release
+# workflow calls it with `upload-artifacts: true` to collect the binaries it
+# publishes. Keeping one matrix means a target cannot be verified in CI and then
+# quietly missing from a release.
+#
+# Phase 0 verified all fourteen targets compile, including that `psm`/`stacker`
+# — the only dependency with per-architecture assembly — assembles for each.
+# Eight are wired up here, matching `packages/binding/package.json`.
+#
+# **The three `win32-*-msvc` targets cannot be cross-compiled from a non-Windows
+# host**: `stacker` compiles `windows.c` and `psm` needs `lib.exe`. They build on
+# a Windows runner, where MSVC can target arm64 from an x64 host.
+
+name: Build native
+
+on:
+  workflow_call:
+    inputs:
+      upload-artifacts:
+        description: Keep the built `.node` files as workflow artifacts.
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            runner: macos-14
+            smoke: true
+
+          # The only remaining Intel macOS runner. `macos-13` was retired, and
+          # `macos-latest` is arm64 — building x86_64 there would cross-compile
+          # and lose the smoke test.
+          - target: x86_64-apple-darwin
+            runner: macos-15-intel
+            smoke: true
+
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            smoke: true
+
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-latest
+            # napi-cross supplies a glibc 2.17 sysroot, which sets the oldest
+            # glibc the published binary will run against.
+            flags: --use-napi-cross
+            smoke: false
+
+          # musl builds inside napi-rs's Alpine image rather than cross-
+          # compiling. Alpine is a large share of Node Docker images, which is
+          # exactly why the platform suffix has to carry the libc component.
+          - target: x86_64-unknown-linux-musl
+            runner: ubuntu-latest
+            container: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
+            alpine: true
+            smoke: true
+
+          - target: aarch64-unknown-linux-musl
+            runner: ubuntu-latest
+            container: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
+            alpine: true
+            flags: --use-napi-cross
+            smoke: false
+
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+            smoke: true
+
+          - target: aarch64-pc-windows-msvc
+            runner: windows-latest
+            smoke: false
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      # The Alpine image already carries Node; setup-node inside a container
+      # fights with it and gains nothing.
+      - uses: actions/setup-node@v5
+        if: ${{ !matrix.alpine }}
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Show Rust toolchain
+        run: rustup show
+
+      - name: Add target
+        run: rustup target add ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: native-${{ matrix.target }}
+
+      - name: Build
+        working-directory: packages/binding
+        run: >
+          pnpm exec napi build
+          --manifest-path ../../crates/emquad-napi/Cargo.toml
+          --package-json-path ./package.json
+          --platform --esm --release
+          --target ${{ matrix.target }}
+          ${{ matrix.flags }}
+          --output-dir .
+
+      # A binary that builds but will not load is a release incident, and the
+      # loader is exactly the part a build cannot exercise. Only runnable where
+      # the target's architecture matches the runner's.
+      - name: Smoke test the addon
+        if: matrix.smoke
+        shell: bash
+        run: |
+          cat >/tmp/smoke.mjs <<'JS'
+          import { typstVersion } from "./packages/binding/index.js";
+          const version = typstVersion();
+          if (version !== "0.15.1") {
+            throw new Error(`expected typst 0.15.1, got ${version}`);
+          }
+          console.log(`loaded ${process.platform}/${process.arch}, typst ${version}`);
+          JS
+          node /tmp/smoke.mjs
+
+      # Hard rule 4, checked per target rather than only on the host: a
+      # platform-specific dependency could pull a `-sys` crate in for one
+      # target and no other.
+      - name: No -sys crates
+        if: ${{ !matrix.alpine }}
+        run: ./scripts/check-no-sys-crates.sh
+
+      - name: Report binary size
+        shell: bash
+        run: |
+          file=$(ls packages/binding/*.node)
+          size=$(wc -c <"$file")
+          gzipped=$(gzip -c "$file" | wc -c)
+          {
+            echo "### ${{ matrix.target }}"
+            echo ""
+            echo "| | bytes |"
+            echo "|---|---|"
+            echo "| uncompressed | $size |"
+            echo "| gzipped | $gzipped |"
+          } >>"$GITHUB_STEP_SUMMARY"
+
+      - name: Upload
+        if: inputs.upload-artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bindings-${{ matrix.target }}
+          path: packages/binding/*.node
+          if-no-files-found: error
+          retention-days: 7

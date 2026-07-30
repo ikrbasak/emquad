@@ -1,0 +1,39 @@
+version: 2
+
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      rust:
+        patterns: ["*"]
+        # Typst is pinned to an exact version (`=0.15.1`) because it is pre-1.0
+        # and breaks across minor releases — `FileId::new` and
+        # `VirtualPath::new` both changed in 0.15. A typst bump is a deliberate,
+        # reviewed change with a re-run of the golden files, never an
+        # automatic one.
+        exclude-patterns: ["typst*", "comemo"]
+    ignore:
+      - dependency-name: typst*
+      - dependency-name: comemo
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      dev-tooling:
+        patterns: ["oxlint", "oxfmt", "typescript", "tsdown", "turbo", "@types/*", "lefthook", "@commitlint/*"]
+      napi:
+        patterns: ["@napi-rs/*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

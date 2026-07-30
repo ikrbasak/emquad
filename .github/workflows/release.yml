@@ -1,0 +1,170 @@
+# Publish.
+#
+# **This workflow is not yet usable and fails early and loudly if run.** It
+# needs `napi.packageName` set in `packages/binding/package.json` so
+# `@napi-rs/cli` generates correctly-named platform packages, and it needs
+# `@emquad/core` to stop depending on the unpublishable `@emquad/binding`. Both
+# are Phase 4 work; see `.claude/phase-3/05-handoff.md`.
+#
+# It is committed now, unfinished, because the ordering constraints below are
+# the part that is easy to get wrong and expensive to discover after the fact.
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Build and pack, but do not publish.
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Fail before spending an hour on a matrix build that cannot be published.
+  preflight:
+    name: Preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: The binding is publishable
+        run: |
+          fail=0
+
+          if ! node -e "
+            const pkg = require('./packages/binding/package.json');
+            process.exit(pkg.napi?.packageName ? 0 : 1);
+          "; then
+            echo "::error::packages/binding/package.json needs napi.packageName (e.g. @emquad/typst-binding)."
+            echo "Without it @napi-rs/cli generates platform packages named after @emquad/binding,"
+            echo "which is private and will never be published."
+            fail=1
+          fi
+
+          if node -e "
+            const pkg = require('./packages/core/package.json');
+            const dep = pkg.dependencies?.['@emquad/binding'];
+            process.exit(dep ? 0 : 1);
+          "; then
+            echo "::error::@emquad/core still depends on @emquad/binding, which is private."
+            echo "pnpm publish will refuse it. Replace the dependency with optionalDependencies"
+            echo "on the generated platform packages and repoint packages/core/src/binding.ts."
+            fail=1
+          fi
+
+          exit $fail
+
+  build:
+    name: Build
+    needs: preflight
+    uses: ./.github/workflows/build-native.yml
+    with:
+      upload-artifacts: true
+
+  verify:
+    name: Verify
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: bindings-*
+          merge-multiple: true
+          path: packages/binding
+
+      - name: Every target produced a binary
+        run: |
+          count=$(find packages/binding -maxdepth 1 -name '*.node' | wc -l | tr -d ' ')
+          echo "found $count binaries"
+          find packages/binding -maxdepth 1 -name '*.node' -exec ls -la {} +
+          # Matches the matrix in build-native.yml. A silently missing target
+          # becomes an install failure for whoever is on that platform.
+          if [ "$count" -ne 8 ]; then
+            echo "::error::expected 8 platform binaries, found $count"
+            exit 1
+          fi
+
+      - run: pnpm turbo run build
+      - run: pnpm turbo run test
+
+      # The packed tarballs are what users actually receive. Pack them here so
+      # the artifact that gets published is the artifact that was tested.
+      - name: Pack
+        run: |
+          mkdir -p dist-tarballs
+          for pkg in core resolver fonts; do
+            pnpm --filter "@emquad/$pkg" pack --pack-destination "$PWD/dist-tarballs"
+          done
+          ls -la dist-tarballs
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tarballs
+          path: dist-tarballs/
+          if-no-files-found: error
+
+  publish:
+    name: Publish
+    needs: verify
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || inputs.dry-run == false
+    environment: npm
+    permissions:
+      contents: read
+      # npm provenance: the attestation is signed with a short-lived OIDC token
+      # rather than a stored credential.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: bindings-*
+          merge-multiple: true
+          path: packages/binding
+
+      - run: pnpm turbo run build
+
+      # ORDER MATTERS, and getting it wrong is not recoverable by retrying.
+      #
+      # The platform packages must exist on the registry *before* @emquad/core,
+      # or the first person to install it resolves optionalDependencies that are
+      # not there yet and silently gets no native binding. Republishing core
+      # does not fix an install that already failed.
+      - name: Publish platform packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
+        run: pnpm exec napi prepublish --skip-gh-release --tag-style npm
+
+      - name: Publish packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
+        run: |
+          # fonts and resolver first: neither depends on core, and core's
+          # install is the one that must find everything already present.
+          for pkg in fonts resolver core; do
+            pnpm --filter "@emquad/$pkg" publish --access public --no-git-checks
+          done

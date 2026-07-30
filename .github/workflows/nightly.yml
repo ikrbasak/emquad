@@ -1,0 +1,122 @@
+# The slow and the flaky-by-nature.
+#
+# Everything here is either too long for a pull request (a 100k-compile soak) or
+# depends on something outside the repository (the public typst registry). Both
+# belong on a schedule, where a failure is investigated rather than blocking
+# someone's merge.
+
+name: Nightly
+
+on:
+  schedule:
+    # 03:00 UTC. Nothing depends on the hour; it is off-peak for the runners.
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  soak:
+    name: Soak and interner pressure
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - run: rustup show
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: nightly-soak
+
+      # Footgun #2: `comemo`'s cache is process-global and unbounded. Phase 0
+      # measured RSS at ~1 GB without eviction against ~40 MB with it. The
+      # assertion is that memory plateaus, not that it is small.
+      - name: Soak — RSS must plateau with eviction on
+        run: EMQUAD_SOAK=100000 cargo bench --bench soak
+
+      # Footgun #1: `FileId` is a process-global interner capped at 65,535 that
+      # panics when exhausted. Our guard trips at 50,000 and names the offending
+      # path pattern. This proves it fires before typst's panic does.
+      - name: Interner pressure
+        run: cargo test --all-features --test interner_guard -- --nocapture
+
+  registry:
+    name: Real typst registry
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo run build --filter @emquad/resolver
+
+      # The mocked registry could encode the wrong URL shape or tarball layout
+      # and every other resolver test would still pass. This is the only thing
+      # that says otherwise — which is also why it cannot gate a pull request:
+      # packages.typst.org being down is not a reason to block a merge.
+      - name: Resolve against packages.typst.org
+        env:
+          EMQUAD_NETWORK_TESTS: "1"
+        run: pnpm --filter @emquad/resolver test
+
+  benchmarks:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: rustup show
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: nightly-bench
+
+      # Throughput is the entire value proposition against Puppeteer, so a
+      # silent 3x slowdown is a defect as serious as a wrong-output bug.
+      #
+      # These are recorded rather than asserted against a threshold: shared CI
+      # runners are too noisy for a pass/fail gate, and a flaky performance
+      # check gets muted rather than investigated. Read the trend.
+      - name: Engine throughput
+        run: |
+          {
+            echo "## Engine"
+            echo '```'
+            cargo bench --bench compile 2>&1 | tail -30
+            echo '```'
+          } >>"$GITHUB_STEP_SUMMARY"
+
+      - name: Thread pool against process pool
+        run: |
+          pnpm turbo run build
+          {
+            echo "## Pools — invoice (single page run)"
+            echo '```'
+            ./packages/core/bench/poolcmp.sh invoice 800 2>&1
+            echo '```'
+            echo "## Pools — multirun (forty page runs)"
+            echo '```'
+            ./packages/core/bench/poolcmp.sh multirun 120 2>&1
+            echo '```'
+          } >>"$GITHUB_STEP_SUMMARY"
+
+  # Rebuilding every target nightly catches an upstream toolchain or dependency
+  # change that breaks a platform nobody touched.
+  matrix:
+    name: Full target matrix
+    uses: ./.github/workflows/build-native.yml
+    with:
+      upload-artifacts: false
