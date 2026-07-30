@@ -1,0 +1,36 @@
+{
+  "name": "@emquad/resolver",
+  "version": "0.0.0",
+  "description": "@preview package resolution for @emquad/core. Owns all networking.",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc",
+    "clean": "rm -rf dist",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "devDependencies": {
+    "@emquad/core": "workspace:*",
+    "@emquad/fonts": "workspace:*",
+    "@types/node": "^26.1.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
