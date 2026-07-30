@@ -268,15 +268,19 @@ test("SVG text vanishes entirely when no fallback face fits", async () => {
   // diagnostics, no glyphs. This is the failure mode that makes an empty font
   // set a hard error (rule 8) — it is the same class of bug, reachable with a
   // font set that is merely incomplete rather than empty.
-  await using mono = new Compiler({ fonts: fontsFor("dejavu-sans-mono") });
-  const { pdf, warnings } = await mono
-    .document()
-    .source('#image("/ghost.svg", width: 60pt)')
-    .asset("/ghost.svg", GHOST_SVG)
-    .compile({ tagged: false });
+  const mono = new Compiler({ fonts: fontsFor("dejavu-sans-mono") });
+  try {
+    const { pdf, warnings } = await mono
+      .document()
+      .source('#image("/ghost.svg", width: 60pt)')
+      .asset("/ghost.svg", GHOST_SVG)
+      .compile({ tagged: false });
 
-  assert.equal(warnings.length, 0);
-  assert.equal(inkPixels(pdf), 0, "typst has changed how it handles this; re-measure");
+    assert.equal(warnings.length, 0);
+    assert.equal(inkPixels(pdf), 0, "typst has changed how it handles this; re-measure");
+  } finally {
+    await mono.close();
+  }
 });
 
 test.after(async () => {
