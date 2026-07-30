@@ -53,12 +53,16 @@ test("a resolved package compiles", async () => {
   });
 
   const packages = await resolver.resolve(source);
-  await using compiler = new Compiler({ fonts: fontsFor("libertinus-serif"), packages });
-  const { pdf, pages, warnings } = await compiler.document().source(source).compile();
+  const compiler = new Compiler({ fonts: fontsFor("libertinus-serif"), packages });
+  try {
+    const { pdf, pages, warnings } = await compiler.document().source(source).compile();
 
-  assert.equal(pages, 1);
-  assert.ok(pdf.length > 1000);
-  assert.deepEqual(warnings, []);
+    assert.equal(pages, 1);
+    assert.ok(pdf.length > 1000);
+    assert.deepEqual(warnings, []);
+  } finally {
+    await compiler.close();
+  }
 });
 
 test("a transitively resolved package compiles", async () => {
@@ -74,13 +78,17 @@ test("a transitively resolved package compiles", async () => {
   });
 
   const packages = await resolver.resolve(source);
-  await using compiler = new Compiler({ fonts: fontsFor("libertinus-serif"), packages });
-  const { pages } = await compiler.document().source(source).compile();
+  const compiler = new Compiler({ fonts: fontsFor("libertinus-serif"), packages });
+  try {
+    const { pages } = await compiler.document().source(source).compile();
 
-  // `card` imports `greet`, and only `card`'s own source says so. If the
-  // transitive scan missed it, this fails at import rather than at resolve.
-  assert.equal(pages, 1);
-  assert.equal(reg.calls.length, 2);
+    // `card` imports `greet`, and only `card`'s own source says so. If the
+    // transitive scan missed it, this fails at import rather than at resolve.
+    assert.equal(pages, 1);
+    assert.equal(reg.calls.length, 2);
+  } finally {
+    await compiler.close();
+  }
 });
 
 test("a package mounted without its manifest fails at import", async () => {
@@ -97,21 +105,24 @@ test("a package mounted without its manifest fails at import", async () => {
   const packages = await resolver.resolve(source);
   const withoutManifest = packages.filter((file) => file.path !== "typst.toml");
 
-  await using compiler = new Compiler({
+  const compiler = new Compiler({
     fonts: fontsFor("libertinus-serif"),
     packages: withoutManifest,
   });
-
-  // This is the error the manifest requirement exists to prevent, asserted so
-  // the requirement stays justified rather than remembered.
-  await assert.rejects(
-    () => compiler.document().source(source).compile(),
-    (error) => {
-      assert.equal(error.code, "COMPILE_FAILED");
-      assert.match(error.message, /typst\.toml/u);
-      return true;
-    },
-  );
+  try {
+    // This is the error the manifest requirement exists to prevent, asserted so
+    // the requirement stays justified rather than remembered.
+    await assert.rejects(
+      () => compiler.document().source(source).compile(),
+      (error) => {
+        assert.equal(error.code, "COMPILE_FAILED");
+        assert.match(error.message, /typst\.toml/u);
+        return true;
+      },
+    );
+  } finally {
+    await compiler.close();
+  }
 });
 
 test("resolving is startup work, not per-compile work", async () => {
@@ -126,15 +137,18 @@ test("resolving is startup work, not per-compile work", async () => {
   });
 
   const packages = await resolver.resolve(source);
-  await using compiler = new Compiler({ fonts: fontsFor("libertinus-serif"), packages });
+  const compiler = new Compiler({ fonts: fontsFor("libertinus-serif"), packages });
+  try {
+    for (let i = 0; i < 50; i += 1) {
+      await compiler.document().source(source).compile();
+    }
 
-  for (let i = 0; i < 50; i += 1) {
-    await compiler.document().source(source).compile();
+    // Fifty compiles, one fetch. This is the shape the API is built around:
+    // resolve once at startup, keep the compiler, and never touch the network
+    // again.
+    assert.equal(reg.calls.length, 1);
+    assert.equal(resolver.networkFetches, 1);
+  } finally {
+    await compiler.close();
   }
-
-  // Fifty compiles, one fetch. This is the shape the API is built around:
-  // resolve once at startup, keep the compiler, and never touch the network
-  // again.
-  assert.equal(reg.calls.length, 1);
-  assert.equal(resolver.networkFetches, 1);
 });
