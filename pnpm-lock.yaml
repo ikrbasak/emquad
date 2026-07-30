@@ -42,8 +42,8 @@ importers:
   packages/binding:
     devDependencies:
       '@napi-rs/cli':
-        specifier: ^3.8.0
-        version: 3.8.0(@emnapi/runtime@1.11.2)(@types/node@26.1.2)
+        specifier: ^3.8.1
+        version: 3.8.1(@emnapi/runtime@1.11.2)(@types/node@26.1.2)
     optionalDependencies:
       '@emquad/typst-binding-darwin-arm64':
         specifier: 0.0.1
@@ -477,8 +477,8 @@ packages:
   '@manypkg/get-packages@1.1.3':
     resolution: {integrity: sha512-fo+QhuU3qE/2TQMQmbVMqaQ6EWbMhi4ABWP+O4AM1NqPBuy0OrApV5LO6BrrgnhtAHS2NH6RrVk9OL181tTi8A==}
 
-  '@napi-rs/cli@3.8.0':
-    resolution: {integrity: sha512-RagwLdCJ1LigZTe3fE5Bc+2a4sHDV+1IAxvyFlZf25qSQj8e2Sdc8xq2xyN2ydNokdfDN4DprGQkU1eBJJCl8w==}
+  '@napi-rs/cli@3.8.1':
+    resolution: {integrity: sha512-XDtwn0o6XGLxzMoL7FrTDA7jz7t6UUAI+QreICK5QgDOqeZJODmLv0p77kzQNyfKbXVomAw1u2SC5Zzsr07gig==}
     engines: {node: ^20.17.0 || ^22.13.0 || >= 23.5.0}
     hasBin: true
     peerDependencies:
@@ -2764,7 +2764,7 @@ snapshots:
       globby: 11.1.0
       read-yaml-file: 1.1.0
 
-  '@napi-rs/cli@3.8.0(@emnapi/runtime@1.11.2)(@types/node@26.1.2)':
+  '@napi-rs/cli@3.8.1(@emnapi/runtime@1.11.2)(@types/node@26.1.2)':
     dependencies:
       '@inquirer/prompts': 8.5.2(@types/node@26.1.2)
       '@napi-rs/cross-toolchain': 1.0.3
