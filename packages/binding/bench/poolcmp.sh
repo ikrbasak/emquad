@@ -11,7 +11,7 @@
 # one's cache. Alternating order stops a thermal ramp or a warm page cache from
 # masquerading as a result.
 #
-# Build the addon first: `pnpm --filter @emquad/binding run build`.
+# Build the addon first: `pnpm --filter @emquad/typst-binding run build`.
 
 set -euo pipefail
 

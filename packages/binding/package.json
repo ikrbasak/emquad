@@ -1,5 +1,5 @@
 {
-  "name": "@emquad/binding",
+  "name": "@emquad/typst-binding",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -17,6 +17,7 @@
   },
   "napi": {
     "binaryName": "emquad",
+    "packageName": "@emquad/typst-binding",
     "targets": [
       "aarch64-apple-darwin",
       "x86_64-apple-darwin",

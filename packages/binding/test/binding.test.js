@@ -4,7 +4,7 @@
 // intact, that a panic surfaces as a value rather than killing the process, and
 // that the pool behaves under saturation.
 //
-// Run: `pnpm --filter @emquad/binding test` (builds with `test-hooks` first).
+// Run: `pnpm --filter @emquad/typst-binding test` (builds with `test-hooks` first).
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
@@ -319,7 +319,7 @@ describe("failure containment", () => {
     assert.equal(
       typeof c.__panicInPool,
       "function",
-      "build with `pnpm --filter @emquad/binding run build:test`",
+      "build with `pnpm --filter @emquad/typst-binding run build:test`",
     );
 
     const result = await c.__panicInPool();

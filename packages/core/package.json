@@ -27,7 +27,7 @@
     "test": "node --test \"test/*.test.js\""
   },
   "dependencies": {
-    "@emquad/binding": "workspace:*"
+    "@emquad/typst-binding": "workspace:*"
   },
   "devDependencies": {
     "@emquad/fonts": "workspace:*",

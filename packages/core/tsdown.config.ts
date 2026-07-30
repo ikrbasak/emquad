@@ -26,6 +26,6 @@ export default defineConfig({
     // The native addon must stay external. Bundling it would break the
     // `createRequire`-relative resolution its generated loader depends on to
     // find the `.node` file.
-    neverBundle: ["@emquad/binding"],
+    neverBundle: ["@emquad/typst-binding"],
   },
 });

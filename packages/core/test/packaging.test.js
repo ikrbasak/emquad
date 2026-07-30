@@ -7,11 +7,11 @@
 // tests import `../dist/index.js` by relative path.
 //
 // **What it does not yet cover.** The native addon is resolved through
-// `@emquad/binding`, which is internal to this repo and not published. Phase 4
-// replaces that with `@emquad/typst-binding-<platform>` optional dependencies,
-// and only then can this install from a registry rather than linking the
-// workspace copy. Everything above that line — the exports map, the file list,
-// the ESM entry — is real and is what this asserts.
+// `@emquad/typst-binding`, which is still private: it cannot be published until
+// the `@emquad/typst-binding-<platform>` packages it declares as
+// `optionalDependencies` exist in a registry. Until then this links the
+// workspace copy rather than installing. Everything above that line — the
+// exports map, the file list, the ESM entry — is real and is what this asserts.
 
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -68,10 +68,18 @@ async function consumer() {
   execFileSync("tar", ["-xzf", packed, "-C", target, "--strip-components=1"]);
 
   // The two dependencies that are not part of what is being tested. Linked
-  // rather than packed: `@emquad/binding` is unpublishable by design, and
-  // `@emquad/fonts` is only here to give the consumer something to compile.
-  for (const name of ["binding", "fonts"]) {
-    symlinkSync(join(PACKAGES, name), join(modules, name), "dir");
+  // rather than packed: `@emquad/typst-binding` is still private until the
+  // platform packages exist, and `@emquad/fonts` is only here to give the
+  // consumer something to compile.
+  //
+  // Directory name and package name diverge for the binding — it lives in
+  // `packages/binding` but publishes as `@emquad/typst-binding` — so the two
+  // are listed separately rather than one being derived from the other.
+  for (const [dir, name] of [
+    ["binding", "typst-binding"],
+    ["fonts", "fonts"],
+  ]) {
+    symlinkSync(join(PACKAGES, dir), join(modules, name), "dir");
   }
 
   writeFileSync(

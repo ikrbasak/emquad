@@ -1,0 +1,21 @@
+{
+  "name": "@emquad/typst-binding-linux-x64-gnu",
+  "version": "0.0.0",
+  "license": "MIT",
+  "files": [
+    "emquad.linux-x64-gnu.node"
+  ],
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "libc": [
+    "glibc"
+  ],
+  "main": "emquad.linux-x64-gnu.node",
+  "engines": {
+    "node": ">=22"
+  }
+}

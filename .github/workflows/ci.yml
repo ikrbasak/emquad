@@ -49,7 +49,7 @@ jobs:
           --verbose
 
       # Deliberately builds nothing: every tsconfig's `include` covers `src`
-      # only, and @emquad/binding's declarations are committed.
+      # only, and @emquad/typst-binding's declarations are committed.
       - run: pnpm turbo run typecheck
 
   # Rust lints need a compile, so they are their own job rather than holding up
@@ -186,7 +186,7 @@ jobs:
         if: matrix.rust
         run: cargo test --all-features
 
-      # turbo orders these. @emquad/binding's test script builds the addon with
+      # turbo orders these. @emquad/typst-binding's test script builds the addon with
       # the `test-hooks` feature, and the other suites are declared to wait for
       # it rather than racing a half-written binary. Nothing here triggers the
       # release LTO link — that belongs to the release path alone.
