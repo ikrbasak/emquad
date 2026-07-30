@@ -31,13 +31,13 @@ jobs:
     name: Lint and format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           # commitlint needs the full range between the base and the head.
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -77,9 +77,9 @@ jobs:
     name: Typecheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -98,7 +98,7 @@ jobs:
     name: Licenses and attribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: rustup show
       - uses: Swatinem/rust-cache@v2
         with:
@@ -152,9 +152,9 @@ jobs:
             node: 22
 
     steps:
-      - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: pnpm
@@ -166,7 +166,7 @@ jobs:
           shared-key: test-${{ matrix.os }}
 
       - name: Cache turbo
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .turbo
           key: turbo-${{ matrix.os }}-${{ github.sha }}
@@ -184,7 +184,7 @@ jobs:
       # "regenerate the goldens" becomes the path of least resistance.
       - name: Upload golden-file diffs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: golden-diff-${{ matrix.os }}-node${{ matrix.node }}
           path: packages/core/test/golden/diff/
@@ -201,7 +201,7 @@ jobs:
     outputs:
       native: ${{ steps.filter.outputs.native }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - id: filter
