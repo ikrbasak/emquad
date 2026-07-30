@@ -14,9 +14,13 @@
     "test:node": "turbo run test",
     "bench": "cargo bench",
     "prepare": "lefthook install",
-    "notices": "cargo deny check licenses && cargo about generate --output-file THIRD-PARTY-NOTICES.md about.hbs"
+    "notices": "cargo deny check licenses && cargo about generate --output-file THIRD-PARTY-NOTICES.md about.hbs",
+    "changeset": "changeset",
+    "changeset:version": "changeset version && pnpm --filter @emquad/typst-binding exec napi version && pnpm install --no-frozen-lockfile",
+    "changeset:status": "changeset status --since=origin/main"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.1",
     "@commitlint/cli": "^21.2.1",
     "@commitlint/config-conventional": "^21.2.0",
     "@types/node": "^26.1.2",

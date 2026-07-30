@@ -1,13 +1,19 @@
 # Publish.
 #
-# **This workflow is not yet usable and fails early and loudly if run.** It
-# needs `napi.packageName` set in `packages/binding/package.json` so
-# `@napi-rs/cli` generates correctly-named platform packages, and it needs
-# `@emquad/core` to stop depending on the unpublishable `@emquad/binding`. Both
-# are Phase 4 work; see `.claude/phase-3/05-handoff.md`.
+# **This workflow is not yet usable and fails early and loudly if run.**
+# `napi.packageName` is now set and the platform package dirs are generated, so
+# what remains is that `@emquad/typst-binding` is still `private` and does not
+# yet declare its `optionalDependencies`. See `.claude/phase-3/05-handoff.md`.
 #
-# It is committed now, unfinished, because the ordering constraints below are
-# the part that is easy to get wrong and expensive to discover after the fact.
+# That last step is deliberately *not* done yet, and the reason is a hard
+# ordering constraint rather than an oversight: pnpm silently excludes an
+# optional dependency it cannot resolve and never records it in the lockfile, so
+# declaring `optionalDependencies` on packages that are not in a registry yet
+# makes `pnpm install --frozen-lockfile` fail in every CI job, permanently. The
+# platform packages have to be published first.
+#
+# It is committed unfinished because the ordering constraints below are the part
+# that is easy to get wrong and expensive to discover after the fact.
 
 name: Release
 
@@ -32,6 +38,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # These check the *state of the tree*, not a hardcoded package name. An
+      # earlier version asserted that `@emquad/core` did not depend on
+      # `@emquad/binding` specifically, which the Phase 4 rename would have
+      # satisfied while leaving the actual problem — a dependency on something
+      # unpublishable — completely intact.
       - name: The binding is publishable
         run: |
           fail=0
@@ -41,19 +52,56 @@ jobs:
             process.exit(pkg.napi?.packageName ? 0 : 1);
           "; then
             echo "::error::packages/binding/package.json needs napi.packageName (e.g. @emquad/typst-binding)."
-            echo "Without it @napi-rs/cli generates platform packages named after @emquad/binding,"
-            echo "which is private and will never be published."
+            echo "Without it @napi-rs/cli generates platform packages named after the package"
+            echo "itself, and the loader looks for names that will never be published."
             fail=1
           fi
 
           if node -e "
-            const pkg = require('./packages/core/package.json');
-            const dep = pkg.dependencies?.['@emquad/binding'];
-            process.exit(dep ? 0 : 1);
+            const pkg = require('./packages/binding/package.json');
+            process.exit(pkg.private ? 0 : 1);
           "; then
-            echo "::error::@emquad/core still depends on @emquad/binding, which is private."
-            echo "pnpm publish will refuse it. Replace the dependency with optionalDependencies"
-            echo "on the generated platform packages and repoint packages/core/src/binding.ts."
+            echo "::error::packages/binding is still private, so nothing depending on it can publish."
+            echo "Drop \`private\` once its optionalDependencies are declared below."
+            fail=1
+          fi
+
+          # The loader resolves @emquad/typst-binding-<platform> at require time.
+          # Published without these declared, it installs cleanly and then throws
+          # on first use with no binding found for the platform.
+          if ! node -e "
+            const pkg = require('./packages/binding/package.json');
+            const declared = Object.keys(pkg.optionalDependencies ?? {});
+            const targets = pkg.napi?.targets ?? [];
+            process.exit(declared.length >= targets.length && targets.length > 0 ? 0 : 1);
+          "; then
+            echo "::error::packages/binding declares fewer optionalDependencies than napi.targets."
+            echo "Every target needs its @emquad/typst-binding-<platform> package listed, or the"
+            echo "loader will find nothing at runtime on that platform."
+            echo "Publish the platform packages BEFORE adding these: pnpm cannot lock a specifier"
+            echo "that no registry serves, and --frozen-lockfile then fails in every job."
+            fail=1
+          fi
+
+          # Every workspace dependency of @emquad/core must itself be publishable.
+          if ! node -e "
+            const fs = require('fs');
+            const core = require('./packages/core/package.json');
+            const deps = Object.keys(core.dependencies ?? {});
+            const bad = deps.filter((name) => {
+              for (const dir of fs.readdirSync('./packages')) {
+                const path = './packages/' + dir + '/package.json';
+                if (!fs.existsSync(path)) continue;
+                const pkg = require(path);
+                if (pkg.name === name && pkg.private) return true;
+              }
+              return false;
+            });
+            if (bad.length) console.error('unpublishable: ' + bad.join(', '));
+            process.exit(bad.length ? 1 : 0);
+          "; then
+            echo "::error::@emquad/core depends on a private workspace package (named above)."
+            echo "pnpm publish will refuse it."
             fail=1
           fi
 
@@ -152,13 +200,18 @@ jobs:
           NPM_CONFIG_PROVENANCE: "true"
         run: pnpm exec napi prepublish --skip-gh-release --tag-style npm
 
+      # `changeset publish` rather than a hand-ordered loop, for two properties
+      # the loop did not have. It publishes in topological order, so
+      # `@emquad/typst-binding` goes out before the `@emquad/core` that depends
+      # on it without anyone maintaining the list. And it skips any package
+      # whose version is already on the registry, which makes a half-finished
+      # publish safe to re-run — the loop would abort on the first
+      # already-published version and leave the rest unsent.
+      #
+      # `--no-git-tag`: this workflow is triggered by a `v*` tag that already
+      # exists, and per-package tags would need `contents: write` for nothing.
       - name: Publish packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
-        run: |
-          # fonts and resolver first: neither depends on core, and core's
-          # install is the one that must find everything already present.
-          for pkg in fonts resolver core; do
-            pnpm --filter "@emquad/$pkg" publish --access public --no-git-checks
-          done
+        run: pnpm exec changeset publish --no-git-tag
