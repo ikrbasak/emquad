@@ -1,0 +1,36 @@
+{
+  "name": "@emquad/fonts",
+  "version": "0.0.0",
+  "description": "The default Typst font set for @emquad/core, shipped byte-for-byte.",
+  "license": "OFL-1.1 AND LPPL-1.3c AND GPL-3.0-or-later AND Bitstream-Vera",
+  "files": [
+    "dist",
+    "fonts",
+    "licenses",
+    "README.md"
+  ],
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc",
+    "clean": "rm -rf dist",
+    "sync": "node scripts/sync.mjs",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
