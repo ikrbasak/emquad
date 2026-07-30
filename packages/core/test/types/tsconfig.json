@@ -1,0 +1,26 @@
+{
+  // Checks `consumer.ts` against the built `dist/index.d.ts`. Separate from the
+  // package's own tsconfig because that one deliberately covers `src` only and
+  // must not require a build — this one does require one, so it runs from the
+  // `test` script, which turbo orders after `build`.
+  //
+  // No `paths` entry: the import is a plain relative `../../dist/index.js`, so
+  // TypeScript resolves it exactly the way a consumer's would, through the
+  // `.d.ts` beside the `.js`. Mapping it would test the mapping instead.
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    // `dist/*.d.ts` is generated, and `allowImportingTsExtensions` is for
+    // source that names `.ts` directly. Neither applies here: this imports the
+    // built artifact by its published specifier.
+    "allowImportingTsExtensions": false,
+
+    // The point is to check what consumers get, and consumers do not have our
+    // lint settings — but they do get `skipLibCheck` off if they set it, so
+    // check the declaration file itself rather than skipping it.
+    "skipLibCheck": false,
+
+    // The fixture exists to name types, not to use every binding it declares.
+    "noUnusedLocals": false
+  },
+  "include": ["consumer.ts"]
+}

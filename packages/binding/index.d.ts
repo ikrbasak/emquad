@@ -71,7 +71,7 @@ export interface CompileRequest {
   /** Use an existing file as the main document instead of `source`. */
   main?: string
   /** Per-request files. Shadow the base layer for this compile only. */
-  files?: Record<string, FileData>
+  files?: Record<string, string | Uint8Array>
   clock?: ClockOptions
   pdf?: PdfOptions
 }
@@ -114,7 +114,7 @@ export interface CompilerOptions {
    * per request. Built once; rebuilding it per compile would invalidate the
    * memo cache.
    */
-  files?: Record<string, FileData>
+  files?: Record<string, string | Uint8Array>
   /**
    * `@preview` package files. Fetching them is the resolver's job, in
    * TypeScript — this layer only stores what it is handed.

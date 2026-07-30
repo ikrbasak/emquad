@@ -36,9 +36,7 @@ use napi::Env;
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
 
-use convert::{
-    ClockOptions, CompileResult, FileData, OwnedData, PackageFile, PdfOptions, own, own_all,
-};
+use convert::{ClockOptions, CompileResult, OwnedData, PackageFile, PdfOptions, own, own_all};
 use pool::{Pool, SubmitError};
 
 /// The default `comemo` eviction age.
@@ -62,7 +60,7 @@ pub struct CompilerOptions {
     /// The shared base VFS layer: templates, logos, data that does not change
     /// per request. Built once; rebuilding it per compile would invalidate the
     /// memo cache.
-    pub files: Option<HashMap<String, FileData>>,
+    pub files: Option<HashMap<String, Either<String, Uint8Array>>>,
 
     /// `@preview` package files. Fetching them is the resolver's job, in
     /// TypeScript — this layer only stores what it is handed.
@@ -108,7 +106,7 @@ pub struct CompileRequest {
     pub main: Option<String>,
 
     /// Per-request files. Shadow the base layer for this compile only.
-    pub files: Option<HashMap<String, FileData>>,
+    pub files: Option<HashMap<String, Either<String, Uint8Array>>>,
 
     pub clock: Option<ClockOptions>,
     pub pdf: Option<PdfOptions>,

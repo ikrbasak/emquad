@@ -27,7 +27,7 @@
     "build": "tsdown",
     "typecheck": "tsc",
     "clean": "rm -rf dist",
-    "test": "node --test \"test/*.test.js\""
+    "test": "tsc -p test/types && node --test \"test/*.test.js\""
   },
   "dependencies": {
     "@emquad/typst-binding": "workspace:*"
