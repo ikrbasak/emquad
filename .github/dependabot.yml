@@ -24,6 +24,19 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # Matches pnpm's `minimumReleaseAge`, which defaults to 1440 minutes in
+    # pnpm 11: it refuses to install any version published less than a day ago,
+    # as a supply-chain measure. Dependabot opens a PR the moment a version
+    # lands, so without this every npm update arrives already red — CI fails at
+    # `pnpm install --frozen-lockfile` with
+    # ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION and stays that way until the clock
+    # runs out. A recurring, self-healing failure is worse than a slow one: it
+    # teaches reviewers that red on a Dependabot PR means nothing.
+    #
+    # Two days rather than one, so a PR opened just inside the window is still
+    # installable by the time anyone looks at it.
+    cooldown:
+      default-days: 2
     groups:
       dev-tooling:
         patterns: ["oxlint", "oxfmt", "typescript", "tsdown", "turbo", "@types/*", "lefthook", "@commitlint/*"]
