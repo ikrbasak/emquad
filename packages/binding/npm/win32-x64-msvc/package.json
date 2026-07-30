@@ -12,6 +12,9 @@
     "x64"
   ],
   "main": "emquad.win32-x64-msvc.node",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=22"
   }

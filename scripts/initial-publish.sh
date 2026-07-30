@@ -90,6 +90,24 @@ count=$(find packages/binding/npm -maxdepth 1 -mindepth 1 -type d | wc -l | tr -
 targets=$(jq -r '.napi.targets | length' "$BINDING")
 [ "$count" = "$targets" ] || die "found $count platform dirs but napi.targets lists $targets"
 
+# A scoped package publishes as `restricted` unless told otherwise, and a
+# restricted package needs a paid org — so the registry answers 402 Payment
+# Required rather than anything mentioning visibility. Changesets has its own
+# `access` setting, but `napi pre-publish` does not read it, which is exactly
+# how the platform packages hit this. `publishConfig` is the tool-independent
+# spelling, and napi propagates it from the binding manifest into the generated
+# platform packages.
+notpublic=0
+for f in "$BINDING" packages/core/package.json packages/fonts/package.json \
+  packages/resolver/package.json packages/binding/npm/*/package.json; do
+  access=$(jq -r '.publishConfig.access // "restricted"' "$f")
+  if [ "$access" != "public" ]; then
+    printf '  not public: %s\n' "$(jq -r .name "$f")"
+    notpublic=$((notpublic + 1))
+  fi
+done
+[ "$notpublic" = 0 ] || die "$notpublic package(s) would publish as restricted, which npm rejects with 402 unless the org is paid"
+
 printf '  version:  %s\n' "$VERSION"
 printf '  platform: %s packages, all with binaries\n' "$count"
 printf '  mode:     %s\n' "$([ "$EXECUTE" = 1 ] && echo 'EXECUTE — this will publish' || echo 'dry run')"

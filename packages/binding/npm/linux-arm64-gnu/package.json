@@ -15,6 +15,9 @@
     "glibc"
   ],
   "main": "emquad.linux-arm64-gnu.node",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=22"
   }

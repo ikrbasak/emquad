@@ -15,6 +15,9 @@
     "musl"
   ],
   "main": "emquad.linux-x64-musl.node",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=22"
   }

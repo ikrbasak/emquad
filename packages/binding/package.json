@@ -6,6 +6,9 @@
   "type": "module",
   "main": "index.js",
   "types": "index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "napi build --manifest-path ../../crates/emquad-napi/Cargo.toml --package-json-path ./package.json --platform --esm --output-dir . --release",
     "build:debug": "napi build --manifest-path ../../crates/emquad-napi/Cargo.toml --package-json-path ./package.json --platform --esm --output-dir .",

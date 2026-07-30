@@ -12,6 +12,9 @@
     "x64"
   ],
   "main": "emquad.darwin-x64.node",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=22"
   }
