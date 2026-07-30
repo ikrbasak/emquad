@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Mirrors the `imports` field in package.json. Node resolves `#/…` from
+    // that field at runtime and TypeScript resolves it from here; both have to
+    // exist, and they have to agree.
+    //
+    // No `baseUrl` — TypeScript 7 removed it, and `paths` are now resolved
+    // relative to this file, which is what the relative entries below assume.
+    "paths": {
+      "#/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "tsdown.config.ts"]
+}

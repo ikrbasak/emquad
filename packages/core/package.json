@@ -1,0 +1,40 @@
+{
+  "name": "@emquad/core",
+  "version": "0.0.0",
+  "description": "Typst PDF generation for Node. VFS in, PDF out.",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "THIRD-PARTY-NOTICES.md"
+  ],
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc",
+    "clean": "rm -rf dist",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "dependencies": {
+    "@emquad/binding": "workspace:*"
+  },
+  "devDependencies": {
+    "@emquad/fonts": "workspace:*",
+    "@types/node": "^26.1.2",
+    "mupdf": "^1.28.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
