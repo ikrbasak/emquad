@@ -119,9 +119,17 @@ jobs:
           NODE_VERSION: "24.18.0"
         run: |
           set -eu
-          apk add --no-cache xz
-          curl -fsSL "https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64-musl.tar.xz" \
-            | tar -xJ --strip-components=1 -C /usr/local
+          # The base image carries busybox wget, not curl, and xz is a separate
+          # package. Each step is its own command rather than a pipeline: this
+          # is POSIX sh with no `pipefail`, so a download failure inside
+          # `curl | tar` surfaces as a confusing tar error and `set -e` never
+          # sees it.
+          apk add --no-cache curl xz
+          curl -fsSL -o /tmp/node.tar.xz \
+            "https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64-musl.tar.xz"
+          unxz /tmp/node.tar.xz
+          tar -xf /tmp/node.tar --strip-components=1 -C /usr/local
+          rm /tmp/node.tar
           node --version
 
       - name: Set up dependencies (Alpine)
