@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+
+  // Shared by every package. Packages extend this and add only `include` and,
+  // where they need it, `types`.
+  //
+  // Nothing here emits: `tsdown` builds, and `tsc` is used purely as a type
+  // checker. Splitting the two that way means the bundler never has to be
+  // trusted with type errors and the checker never has to be configured for
+  // output.
+  "compilerOptions": {
+    // Node 22 is the floor, so ES2023 is available without downleveling.
+    // Emitting anything older would only obscure stack traces.
+    "target": "es2023",
+    // `esnext.disposable` is the one forward-looking addition: `await using`
+    // and `Symbol.asyncDispose` are how a `Compiler` releases its worker
+    // processes without the caller remembering a `close()`. Node 22 has both
+    // at runtime; only the type declarations live outside ES2023.
+    "lib": ["es2023", "esnext.disposable"],
+
+    // `nodenext` rather than `esnext`: it is the only setting that models
+    // Node's real resolution — `exports` maps, the `.js` extension
+    // requirement, and the ESM/CJS distinction. This project is ESM-only, so
+    // the packages declare `"type": "module"` and nodenext resolves them as
+    // ESM. Getting this wrong is the classic way a published package fails to
+    // import while every local test passes.
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+
+    "strict": true,
+    // Both of these are off even under `strict`, and both catch real bugs
+    // here. `noUncheckedIndexedAccess` matters because the VFS and font
+    // arrays are indexed by user-supplied values; `exactOptionalPropertyTypes`
+    // matters because the napi boundary distinguishes an absent field from one
+    // explicitly set to `undefined`.
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+
+    // `verbatimModuleSyntax` forces `import type` to be written explicitly,
+    // which keeps type-only imports from surviving into emitted JS and
+    // dragging a runtime dependency along with them.
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    // Nothing that needs a runtime transform: no enums, no parameter
+    // properties, no namespaces. Keeps the emit a pure type erasure, so the
+    // bundler and the checker cannot disagree about what the JavaScript is.
+    "erasableSyntaxOnly": true,
+
+    // Imports name `.ts` files directly rather than the `.js` files that do
+    // not exist yet. Permitted because nothing here emits, and it keeps a
+    // specifier meaning the file it actually names — the `.js`-that-means-`.ts`
+    // convention is a standing source of confusion for anyone reading the
+    // source rather than the build output.
+    "allowImportingTsExtensions": true,
+
+    // Named rather than left to automatic `@types` discovery. Under pnpm's
+    // symlinked layout the automatic scan does not reliably reach the root
+    // store, and the failure is a wall of "Cannot find name 'process'" that
+    // looks like a missing dependency rather than a resolution setting.
+    "types": ["node"],
+
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true
+  }
+}

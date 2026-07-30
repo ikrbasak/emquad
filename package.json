@@ -4,10 +4,14 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "build": "turbo run build",
+    "clean": "turbo run clean",
+    "typecheck": "turbo run typecheck",
     "fmt": "oxfmt . && cargo fmt --all",
     "fmt:check": "oxfmt --check . && cargo fmt --all -- --check",
     "lint": "oxlint --deny-warnings && cargo clippy --all-targets --all-features -- -D warnings",
-    "test": "cargo test && pnpm --filter @emquad/binding test",
+    "test": "cargo test && turbo run test",
+    "test:node": "turbo run test",
     "bench": "cargo bench",
     "prepare": "lefthook install",
     "notices": "cargo deny check licenses && cargo about generate --output-file THIRD-PARTY-NOTICES.md about.hbs"
@@ -15,9 +19,13 @@
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",
     "@commitlint/config-conventional": "^21.2.0",
+    "@types/node": "^26.1.2",
     "lefthook": "^2.1.10",
     "oxfmt": "^0.61.0",
-    "oxlint": "^1.76.0"
+    "oxlint": "^1.76.0",
+    "tsdown": "^0.22.14",
+    "turbo": "^2.10.7",
+    "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">=22"

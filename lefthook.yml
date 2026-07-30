@@ -38,6 +38,13 @@ pre-push:
     - name: cargo-test
       run: cargo test --all-features
 
+    # Typechecking, not building. `tsc` is configured with `noEmit` and used
+    # purely as a checker — tsdown does the building — so this is the only
+    # place type errors are caught.
+    - name: typecheck
+      glob: '*.{ts,mts,cts}'
+      run: pnpm turbo run typecheck
+
     - name: licenses
       glob: '*.{toml,lock}'
       run: cargo deny check licenses

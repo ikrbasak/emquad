@@ -1,0 +1,29 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "stream",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      // `*.node` and the generated loader belong to @emquad/binding, whose
+      // build is a several-minute LTO link. Declaring them as outputs is what
+      // lets turbo skip it on every run after the first.
+      "outputs": ["dist/**", "*.node", "index.js", "index.d.ts"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      // `^build` as well as `build`: the core suite runs against the native
+      // addon from @emquad/binding, and the resolver's integration tests run
+      // against @emquad/core's `dist`.
+      "dependsOn": ["build", "^build"],
+      // Tests read fixtures and write diff artifacts that turbo does not
+      // track. Caching a run that depends on untracked files would report a
+      // stale pass, which is the one failure mode a test cache must not have.
+      "cache": false
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}

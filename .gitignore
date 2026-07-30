@@ -4,3 +4,10 @@ node_modules/
 dist/
 .turbo/
 .DS_Store
+
+# Golden-file mismatch artifacts. Written on failure so a human can judge the
+# change; never committed.
+packages/*/test/golden/diff/
+
+# `pnpm pack` output from the packaging tests.
+*.tgz
