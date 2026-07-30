@@ -157,21 +157,30 @@ done
 
 # --- 2. wait for the registry ------------------------------------------------
 
+# Ten minutes, not two. A package's *first ever* version is served well behind
+# its publish — npmjs.com shows it immediately while registry.npmjs.org still
+# 404s the packument, and on the first real run that gap outlasted a 120s poll
+# and killed the script two packages from the end. Later versions of an
+# existing package appear far faster; this window is sized for the cold case.
+#
+# Polled with curl rather than `npm view` so a stale npm HTTP cache cannot
+# report a package missing that is actually being served.
 say "2/4  Waiting for the registry to serve them"
 if [ "$EXECUTE" = 1 ]; then
   for dir in packages/binding/npm/*/; do
     name=$(jq -r .name "$dir/package.json")
-    for attempt in $(seq 1 30); do
-      if npm view "$name@$VERSION" version >/dev/null 2>&1; then
+    encoded=${name/\//%2F}
+    for attempt in $(seq 1 60); do
+      if curl -fsS -o /dev/null "https://registry.npmjs.org/$encoded" 2>/dev/null; then
         printf '  ok: %s\n' "$name"
         break
       fi
-      [ "$attempt" = 30 ] && die "$name never appeared on the registry"
-      sleep 4
+      [ "$attempt" = 60 ] && die "$name still not served after 10 minutes — check npmjs.com before re-running"
+      sleep 10
     done
   done
 else
-  echo "  would poll npm for each @emquad/typst-binding-<platform>@$VERSION"
+  echo "  would poll the registry for each @emquad/typst-binding-<platform>@$VERSION"
 fi
 
 # --- 3. declare them ---------------------------------------------------------
