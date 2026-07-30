@@ -132,17 +132,19 @@ jobs:
           if-no-files-found: ignore
 
   # ---------------------------------------------------------------------------
-  # The real suite.
+  # The real suite: every supported OS against every supported Node major.
   #
-  # Not a full OS x Node cross product. The addon is built against Node-API 9
-  # and is ABI-stable across Node majors, so the Node version exercises the
-  # JavaScript layer while the OS exercises the native build — and testing every
-  # combination of both would multiply cost without covering anything new. Full
-  # OS coverage runs on the floor version; the newer Node majors run on Linux.
+  # The addon itself is ABI-stable across Node majors (Node-API 9), so this is
+  # not about the binary. It is about the JavaScript around it: the worker pool
+  # forks child processes, talks to them over structured-clone IPC, and kills
+  # them with a signal on timeout — and all three are places where behavior
+  # differs by OS *and* by Node version, not by one or the other. A pool bug
+  # that only appears on Windows under Node 26 is exactly the shape of thing
+  # this grid is for.
   #
-  # `cargo test` piggybacks on the three floor-version rows rather than being
-  # its own matrix, so the Rust suite still runs on every OS without a second
-  # set of jobs each paying for their own build.
+  # `cargo test` runs once per OS rather than once per cell. It does not touch
+  # Node, so repeating it across the three majors would only buy three copies of
+  # the same result at the price of three more Rust builds.
   # ---------------------------------------------------------------------------
   test:
     name: Test (${{ matrix.os }}, node ${{ matrix.node }})
@@ -150,17 +152,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # macos-14 rather than macos-latest: it is where the golden-file
+        # references were generated, so a mismatch there is a real regression
+        # while a mismatch only elsewhere points at cross-architecture
+        # rasterization instead.
+        os: [ubuntu-latest, macos-14, windows-latest]
+        node: [22, 24, 26]
         include:
           - os: ubuntu-latest
             node: 22
             rust: true
-          - os: ubuntu-latest
-            node: 24
-          - os: ubuntu-latest
-            node: 26
-          # Where the golden-file references were generated. A failure here is
-          # a real regression; a failure only elsewhere is more likely to be
-          # cross-architecture rasterization.
           - os: macos-14
             node: 22
             rust: true

@@ -64,17 +64,25 @@ jobs:
           # musl builds inside napi-rs's Alpine image rather than cross-
           # compiling. Alpine is a large share of Node Docker images, which is
           # exactly why the platform suffix has to carry the libc component.
+          #
+          # The image is what supplies `RUSTFLAGS=-C target-feature=-crt-static`
+          # (a musl cdylib needs it) and the aarch64 musl cross toolchain. Its
+          # bundled Node is not usable — see the install step below.
           - target: x86_64-unknown-linux-musl
             runner: ubuntu-latest
             container: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
             alpine: true
             smoke: true
 
+          # No `--use-napi-cross` here: it is glibc-only, and passing it for a
+          # musl target fails validation outright. The image carries a musl
+          # cross toolchain at /aarch64-linux-musl-cross/bin instead, which the
+          # env below points cargo and cc at.
           - target: aarch64-unknown-linux-musl
             runner: ubuntu-latest
             container: ghcr.io/napi-rs/napi-rs/nodejs-rust:lts-alpine
             alpine: true
-            flags: --use-napi-cross
+            muslCross: aarch64-linux-musl
             smoke: false
 
           - target: x86_64-pc-windows-msvc
@@ -94,11 +102,34 @@ jobs:
       - uses: ./.github/actions/setup
         if: ${{ !matrix.alpine }}
 
+      # The image has not been rebuilt since 2024-12-01 and still carries Node
+      # 18, which is below this project's floor and below pnpm 11's own
+      # `engines` (>= 22.13) — so its Node cannot run our install at all. Its
+      # bundled corepack is stale in a second way: the npm registry rotated its
+      # signing keys, and corepack of that vintage rejects the signature with
+      # `Cannot find matching keyid`.
+      #
+      # Both go away by putting a current Node on PATH. `actions/setup-node`
+      # cannot: it installs glibc binaries that will not run here. The
+      # unofficial musl builds are the only ones Node publishes for Alpine.
+      - name: Install Node (Alpine)
+        if: ${{ matrix.alpine }}
+        shell: sh
+        env:
+          NODE_VERSION: "24.18.0"
+        run: |
+          set -eu
+          apk add --no-cache xz
+          curl -fsSL "https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64-musl.tar.xz" \
+            | tar -xJ --strip-components=1 -C /usr/local
+          node --version
+
       - name: Set up dependencies (Alpine)
         if: ${{ matrix.alpine }}
         shell: bash
         run: |
           corepack enable pnpm
+          pnpm --version
           pnpm install --frozen-lockfile
 
       - name: Show Rust toolchain
@@ -110,6 +141,26 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: native-${{ matrix.target }}
+
+      # The image puts the musl cross toolchain on PATH but tells nothing else
+      # about it, and its global `CC=clang` would otherwise be used to compile
+      # `psm`'s per-architecture assembly for the wrong target. The per-target
+      # variables win over `CC` in the `cc` crate, so naming them here is enough.
+      - name: Point cargo at the musl cross toolchain
+        if: matrix.muslCross
+        shell: sh
+        env:
+          PREFIX: ${{ matrix.muslCross }}
+          TRIPLE: ${{ matrix.target }}
+        run: |
+          set -eu
+          under=$(echo "$TRIPLE" | tr '-' '_')
+          upper=$(echo "$under" | tr '[:lower:]' '[:upper:]')
+          {
+            echo "CC_${under}=${PREFIX}-gcc"
+            echo "CXX_${under}=${PREFIX}-g++"
+            echo "CARGO_TARGET_${upper}_LINKER=${PREFIX}-gcc"
+          } >>"$GITHUB_ENV"
 
       - name: Build
         working-directory: packages/binding
