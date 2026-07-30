@@ -23,6 +23,20 @@ on:
         type: boolean
         default: false
 
+  # Runnable on its own, which the bootstrap needs. `release.yml` is the only
+  # other caller that uploads artifacts, and its preflight fails until the
+  # platform packages are published — so without this the gate would block the
+  # very build that produces the binaries required to clear it.
+  #
+  # Useful outside the bootstrap too: grabbing a single platform's `.node` to
+  # reproduce something should not require cutting a release.
+  workflow_dispatch:
+    inputs:
+      upload-artifacts:
+        description: Keep the built `.node` files as workflow artifacts.
+        type: boolean
+        default: true
+
 permissions:
   contents: read
 
