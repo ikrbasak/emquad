@@ -31,13 +31,13 @@ jobs:
     name: Lint and format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           # commitlint needs the full range between the base and the head.
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -77,9 +77,9 @@ jobs:
     name: Typecheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -98,7 +98,7 @@ jobs:
     name: Licenses and attribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: rustup show
       - uses: Swatinem/rust-cache@v2
         with:
@@ -108,10 +108,13 @@ jobs:
         with:
           tool: cargo-deny
 
-      # `--features cli` is required; without it cargo-about installs as a
-      # library and the binary is silently absent.
+      # Pinned, and `--features cli` is required — without it cargo-about
+      # installs as a library and the binary is silently absent. The pin
+      # matters because the step below compares generated output byte for
+      # byte: an unpinned tool would let a new cargo-about release fail CI
+      # with no change to our dependencies at all.
       - name: Install cargo-about
-        run: cargo install cargo-about --locked --features cli
+        run: cargo install cargo-about --locked --version 0.9.1 --features cli
 
       - run: cargo deny check licenses
 
@@ -120,12 +123,25 @@ jobs:
       # the one the current dependency tree produces.
       - name: THIRD-PARTY-NOTICES.md is current
         run: |
+          cp THIRD-PARTY-NOTICES.md /tmp/notices.committed
           cargo about generate --output-file THIRD-PARTY-NOTICES.md about.hbs
           if ! git diff --quiet -- THIRD-PARTY-NOTICES.md; then
             echo "::error::THIRD-PARTY-NOTICES.md is stale. Run \`pnpm notices\` and commit the result."
-            git diff --stat -- THIRD-PARTY-NOTICES.md
+            # The full diff, not just a stat. A one-line difference between a
+            # macOS-generated file and a Linux-generated one is a fact about
+            # the tool, not about our dependencies, and telling the two apart
+            # needs the actual line.
+            git --no-pager diff --unified=2 -- THIRD-PARTY-NOTICES.md | head -100
             exit 1
           fi
+
+      - name: Upload the regenerated notices
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: third-party-notices
+          path: THIRD-PARTY-NOTICES.md
+          if-no-files-found: ignore
 
   # ---------------------------------------------------------------------------
   # The real suite. Needs the native addon, so it is the long pole.
@@ -152,9 +168,9 @@ jobs:
             node: 22
 
     steps:
-      - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: pnpm
@@ -166,7 +182,7 @@ jobs:
           shared-key: test-${{ matrix.os }}
 
       - name: Cache turbo
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .turbo
           key: turbo-${{ matrix.os }}-${{ github.sha }}
@@ -184,7 +200,7 @@ jobs:
       # "regenerate the goldens" becomes the path of least resistance.
       - name: Upload golden-file diffs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: golden-diff-${{ matrix.os }}-node${{ matrix.node }}
           path: packages/core/test/golden/diff/
@@ -201,7 +217,7 @@ jobs:
     outputs:
       native: ${{ steps.filter.outputs.native }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - id: filter
