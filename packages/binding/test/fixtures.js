@@ -8,12 +8,17 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /** Locate the vendored `typst-assets` crate, or return null. */
 function assetsDir() {
   const meta = JSON.parse(
+    // `fileURLToPath`, not `.pathname`: on Windows the latter yields
+    // `/D:/a/emquad/emquad`, which is not a path. spawn reports a bad `cwd` as
+    // ENOENT against the *executable*, so this surfaced as `spawnSync cargo
+    // ENOENT` and read as a missing toolchain rather than a broken directory.
     execFileSync("cargo", ["metadata", "--format-version", "1"], {
-      cwd: new URL("../../..", import.meta.url).pathname,
+      cwd: fileURLToPath(new URL("../../..", import.meta.url)),
       maxBuffer: 64 * 1024 * 1024,
       encoding: "utf8",
     }),
