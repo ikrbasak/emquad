@@ -135,23 +135,53 @@ parser accepts happily.
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `ci.yml` | PR, `main`, merge queue | lint, typecheck, licenses, tests, conditionally the native matrix |
+| `ci.yml` | PR, `main`, merge queue | lint, clippy, licenses, tests, conditionally the native matrix |
 | `build-native.yml` | called by the other two | one job per shipping target |
 | `nightly.yml` | 03:00 UTC, manual | soak, interner pressure, real registry, benchmarks, full matrix |
 | `release.yml` | `v*` tag, manual | preflight, matrix, verify, publish |
+
+Every job starts with `./.github/actions/setup`, a composite action that installs Node, enables
+**corepack**, caches the pnpm store, and installs. corepack rather than `pnpm/action-setup`
+because the version then comes from `packageManager` — one declaration that CI and every
+developer machine resolve identically. The store is cached explicitly rather than through
+`setup-node`'s `cache: pnpm`, which needs pnpm on `PATH` before it runs and therefore cannot work
+with corepack; asking `pnpm store path` also keeps it correct on Windows.
 
 **`ci` is a single required check.** It gates on `join(needs.*.result)` rather than enumerating
 jobs, so branch protection does not have to be edited whenever a target is added. It treats
 `skipped` as acceptable and `cancelled` as failure — `build-native` is legitimately skipped when a
 PR does not touch the Rust tree.
 
-**Jobs are ordered by how fast they can say no.** `lint` and `typecheck` need no native addon and
-report in under a minute; `typecheck` in particular builds nothing at all, which is why
-`turbo.json` deliberately gives it no `dependsOn`. The test matrix is the long pole.
+**Jobs are ordered by how fast they can say no.** `lint` compiles nothing — oxfmt, oxlint,
+commitlint, and `turbo run typecheck` — and reports in about a minute. Rust lints are a separate
+job because they need a compile.
 
 **The native matrix is conditional.** A `changes` job diffs against the PR base and only runs
-`build-native` when `crates/`, `Cargo.*`, `rust-toolchain.toml`, `packages/binding/`, or the
-workflows themselves changed. On `main` it always runs.
+`build-native` when `crates/`, `Cargo.*`, `rust-toolchain.toml`, `packages/binding/`, or
+`.github/` changed. On `main` it always runs.
+
+### Why the run is not slower than it is
+
+Three things dominate CI cost on a project like this, and each is dealt with deliberately.
+
+**The release LTO link is kept out of the test path.** `@emquad/binding`'s test script builds its
+own addon with the `test-hooks` feature — so if `test` depended on `build`, every test job would
+pay for a `lto = true, codegen-units = 1` link and then immediately overwrite the result with a
+debug build. `turbo.json` therefore gives `build` no `^build` at all (nothing here needs another
+package's output to build) and points the suites at `@emquad/binding#test` instead. From a clean
+tree with a warm cargo cache, `pnpm turbo run test` now runs one debug build and finishes in
+about eight seconds.
+
+**The test matrix is not a cross product.** The addon is built against Node-API 9 and is
+ABI-stable across Node majors, so the Node version exercises the JavaScript layer while the OS
+exercises the native build. Full OS coverage runs on the floor version (22); the newer majors
+(24, 26) run on Linux only. `cargo test` piggybacks on the three floor-version rows rather than
+forming its own matrix, so the Rust suite still runs on every OS without a second set of jobs
+each paying for their own build. The three Linux rows share one `rust-cache` key.
+
+**Tools are downloaded, not compiled.** `cargo install cargo-about` took two and a half minutes
+to build a tool that runs for twenty seconds; the prebuilt release binary is used instead, pinned
+to 0.9.1 because the notices check compares generated output byte for byte.
 
 ### Things encoded in the workflows that are easy to get wrong
 
