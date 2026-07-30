@@ -5,6 +5,9 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
+# npm only. This is a cdylib whose entire purpose is to become the `.node`, so it
+# has nothing to offer a crates.io consumer.
+publish = false
 rust-version.workspace = true
 
 [lints]

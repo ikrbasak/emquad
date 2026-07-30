@@ -5,6 +5,10 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
+# npm is the only distribution channel — see plan/05-phase-4-distribution.md.
+# This crate is the one that could plausibly stand alone on crates.io later (it is
+# pure Rust, no napi); publishing it would be a deliberate decision, not a default.
+publish = false
 rust-version.workspace = true
 
 [lints]
