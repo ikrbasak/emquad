@@ -4,7 +4,7 @@
 lifecycle, and the JS boundary. Nothing else — all compilation logic stays in the engine.
 
 **Status: complete.** 64 Rust tests and 32 Node tests pass; clippy, rustfmt, oxlint, and oxfmt
-are clean. Phase 3 (`@emquad/core` in TypeScript) is not started.
+are clean. Phase 3 is now complete too — see [`../phase-3/`](../phase-3/00-overview.md).
 
 Brief: [`../plan/03-phase-2-napi.md`](../plan/03-phase-2-napi.md). Everything in it is
 delivered except the worker-process pool, which moved to Phase 3 for a structural reason
@@ -17,7 +17,7 @@ explained below.
 | [`01-architecture.md`](01-architecture.md) | How the boundary and the pool are built, and why |
 | [`02-api-guide.md`](02-api-guide.md) | The binding's surface, with working examples |
 | [`03-findings.md`](03-findings.md) | **What Phase 2 measured. Hard rule 9 is retracted here.** |
-| [`04-handoff.md`](04-handoff.md) | **Start here if you are picking up Phase 3** |
+| [`04-handoff.md`](04-handoff.md) | The Phase 3 handoff. Phase 3 is done; [`../phase-3/05-handoff.md`](../phase-3/05-handoff.md) is the current one |
 
 Phase 1's documentation ([`../phase-1/`](../phase-1/00-overview.md)) still describes the engine
 this layer wraps, and its [`03-findings.md`](../phase-1/03-findings.md) is still current except

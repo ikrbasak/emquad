@@ -1,5 +1,13 @@
 # Phase 3 — TypeScript Layer
 
+> **Complete.** Everything below is delivered, including the worker-process pool that moved here
+> from Phase 2. What was built, what it measured, and where it deviates:
+> [`../phase-3/00-overview.md`](../phase-3/00-overview.md).
+>
+> One deviation worth stating here: the sketch below shows `.compile()` returning a PDF, but it
+> returns `{ pdf, pages, warnings }`. Warnings must not be dropped — an unmatched font family
+> produces a perfectly valid PDF set in something else, and nothing about the bytes says so.
+
 Two packages: `@emquad/core` (public API) and `@emquad/resolver` (`@preview` package
 resolution). The resolver touches no Rust and can be built in parallel with Phases 1–2.
 

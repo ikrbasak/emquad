@@ -86,19 +86,56 @@ Doing so to `NewCM10-Regular.otf` would relicense `@emquad/fonts` as GPL-3.
 Ship the bytes verbatim; if the size must come down, drop whole families
 instead.
 
-### Requirements on that package
+### Requirements on that package — all four are now implemented
 
-1. Ship every license text above, verbatim, in the tarball under `licenses/`.
-   Reproducing `typst-assets`' own `NOTICE` file is the simplest way to be sure
-   nothing is missed.
-2. Declare the SPDX expression honestly in `package.json`:
+`packages/fonts/` exists as of Phase 3. Each requirement below is satisfied and
+enforced by `packages/fonts/test/fonts.test.js`, which fails the build rather
+than relying on anyone remembering.
+
+1. **Ship every license text verbatim** under `licenses/`. Done by copying
+   `typst-assets`' own `NOTICE`, which carries all four in full — the simplest
+   way to be sure nothing is missed. A test greps for one distinctive phrase
+   from each.
+2. **Declare the SPDX expression honestly** in `package.json`:
    `"license": "OFL-1.1 AND LPPL-1.3c AND GPL-3.0-or-later AND Bitstream-Vera"`.
-   It is **not** MIT like the rest of the workspace.
-3. Preserve reserved font names. OFL-1.1 restricts renaming, so the files ship
-   under their original names.
-4. Add a packaging test asserting each shipped font file is byte-identical to
-   its `typst-assets` original. That turns the constraint above into something
-   CI enforces rather than something a reviewer has to remember.
+   It is **not** MIT like the rest of the workspace. Asserted by test.
+3. **Preserve reserved font names.** OFL-1.1 restricts renaming, so the files
+   ship under their original names. A test asserts the directory contents match
+   the manifest exactly — no additions, no renames.
+4. **Assert byte-identity with the originals.** `src/manifest.ts` records a
+   SHA-256 per file, and the suite checks both the recorded hash *and*, when the
+   crate is vendored, the `typst-assets` original itself. Comparing only against
+   our own recorded hash would still pass if both were wrong.
+
+The license split is asserted too — 6 OFL, 6 LPPL, 1 GPL-3.0-or-later, 4
+Bitstream-Vera — so an upstream change to the font set fails the build and gets
+a licensing review rather than a version bump.
+
+To regenerate after a Typst upgrade:
+
+```sh
+pnpm --filter @emquad/fonts run sync
+```
+
+That script copies the files and rewrites the manifest. Run it deliberately and
+read the diff: a changed checksum with no changed Typst version means something
+is wrong.
+
+### Reducing the payload, safely
+
+9.3 MB is the largest single item in the install footprint, and subsetting is
+the obvious way to shrink it — which is exactly the thing that would relicense
+the package. The sanctioned alternative ships with it:
+
+```ts
+import { fontsExcept, fontsFor } from "@emquad/fonts";
+
+fontsFor("libertinus-serif");            // 6 faces
+fontsExcept("new-computer-modern");      // drop the math family
+```
+
+Dropping a whole family is a packaging choice. Subsetting a file is a license
+change.
 
 Fonts are a separate optional package precisely so all of this stays visible
 instead of being buried inside a 29 MB binary — and so users who bring their own

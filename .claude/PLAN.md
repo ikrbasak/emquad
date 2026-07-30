@@ -54,5 +54,13 @@ collapse is process-global contention and only the worker-*process* pool can fix
 moves to Phase 3, where Node can actually spawn processes. See
 [`phase-2/03-findings.md`](phase-2/03-findings.md).
 
-**Start with [Phase 3](plan/04-phase-3-typescript.md)**, after reading
-[`phase-2/04-handoff.md`](phase-2/04-handoff.md).
+**Phase 3 is complete.** `@emquad/core`, `@emquad/resolver`, and `@emquad/fonts` are built, with
+115 Node tests including rasterized golden-file comparisons. It **settles the concurrency
+question**: the worker-process pool is 6.93× faster than threads on multi-run documents and
+0.66× on ordinary ones, so `pool.mode` is a document-shape decision rather than a dial. It also
+adds hard rule 12 — SVG text in an unregistered font family fails silently, and with no serif
+family registered it vanishes entirely. Only the golden-file tests caught that. See
+[`phase-3/03-findings.md`](phase-3/03-findings.md).
+
+**Start with [Phase 4](plan/05-phase-4-distribution.md)**, after reading
+[`phase-3/05-handoff.md`](phase-3/05-handoff.md).

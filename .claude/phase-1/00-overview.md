@@ -4,7 +4,7 @@
 dependency, exercised entirely by `cargo test`.
 
 **Status: complete.** 61 tests pass, clippy and rustfmt are clean, `cargo doc` has no warnings.
-Phase 2 (`emquad-napi`) is not started.
+Phases 2 and 3 are complete as well.
 
 Brief: [`../plan/02-phase-1-rust-core.md`](../plan/02-phase-1-rust-core.md). Everything in that
 brief is delivered; the deviations from it are listed below and explained in
@@ -18,7 +18,7 @@ brief is delivered; the deviations from it are listed below and explained in
 | [`02-api-guide.md`](02-api-guide.md) | How to use the crate, with working examples |
 | [`03-findings.md`](03-findings.md) | **What Phase 1 measured and what it corrects.** Includes a correction to hard rule 9 |
 | [`04-tooling.md`](04-tooling.md) | Formatting, linting, hooks, license compliance |
-| [`05-handoff.md`](05-handoff.md) | **Start here if you are picking up Phase 2** |
+| [`05-handoff.md`](05-handoff.md) | The Phase 2 handoff. Phase 2 is done; [`../phase-3/05-handoff.md`](../phase-3/05-handoff.md) is the current one |
 
 Before touching the code, read [`../discovery/02-footguns.md`](../discovery/02-footguns.md) and
 [`../discovery/08-phase-0-results.md`](../discovery/08-phase-0-results.md). Three process-global
@@ -36,7 +36,7 @@ cargo bench --bench soak            # RSS over a long run
 ./scripts/benchcmp.sh multirun      # pinned vs unpinned typst rayon, one config per process
 ./scripts/check-no-sys-crates.sh    # hard rule 4
 cargo deny check licenses           # needs `cargo install cargo-deny --locked`
-pnpm licenses                       # regenerates THIRD-PARTY-NOTICES.md
+pnpm notices                        # regenerates THIRD-PARTY-NOTICES.md
 ```
 
 The first build takes several minutes — 293 crates, and the release profile uses
