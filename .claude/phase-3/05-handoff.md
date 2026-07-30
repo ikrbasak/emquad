@@ -4,25 +4,27 @@ Written for someone — human or agent — who has not seen the earlier work.
 
 ## Where things stand
 
-Phases 0 through 3 are complete. Phase 4 (distribution) has not started. The brief is
-[`../plan/05-phase-4-distribution.md`](../plan/05-phase-4-distribution.md).
+Phases 0 through 4 are complete and `0.0.1` is on npm. This document is kept as the record of
+what Phase 4 inherited; **for what actually happened, read
+[`../phase-4/00-publishing.md`](../phase-4/00-publishing.md)**, which supersedes the job list
+below wherever the two disagree.
 
 | Layer | State |
 |---|---|
 | `crates/emquad-engine` | Done. VFS → PDF. [`../phase-1/`](../phase-1/00-overview.md) |
 | `crates/emquad-napi` | Done. Thread pool, JS boundary. [`../phase-2/`](../phase-2/00-overview.md) |
-| `packages/binding` | Internal, **not published**. Phase 4 replaces how this is consumed |
+| `packages/binding` | Published as `@emquad/typst-binding` |
 | `@emquad/core` | Done. Public API, both pools, `EmquadError` |
 | `@emquad/resolver` | Done. Zero runtime dependencies |
 | `@emquad/fonts` | Done. 17 files, four licenses, checksummed |
-| Distribution | **Not started.** Phase 4 |
+| Distribution | **Done.** 12 packages at `0.0.1` on npm |
 
 64 Rust tests, 115 Node tests. `pnpm test`, `pnpm lint`, `pnpm fmt:check`, `pnpm typecheck` all
 clean.
 
 ## Phase 4's jobs
 
-### 1. Replace the binding seam — mostly done
+### 1. Replace the binding seam — **done**
 
 `packages/core/src/binding.ts` is the **only** file that imports the binding. Everything else in
 `@emquad/core` goes through it. That was arranged deliberately so this change would be small,
@@ -53,26 +55,18 @@ and a generated file kept in sync by hand.
 `os`/`cpu`/`libc`. `packages/*` does not glob them, so they are deliberately **not** workspace
 members. Full suite, typecheck, and `--frozen-lockfile` all green.
 
-**Left:** drop `private` from `packages/binding/package.json` and add the eight
-`optionalDependencies`. Both are blocked, and the block is real:
+**Also done, after the constraints below played out in full:** `private` dropped, the eight
+`optionalDependencies` declared, and all twelve packages published. The ordering was forced
+rather than chosen — **pnpm cannot lock a specifier no registry serves**, so declaring the
+platform packages before publishing them would have failed `--frozen-lockfile` in every CI job
+until the first publish succeeded. Publish first, declare second.
 
-**pnpm cannot lock a dependency no registry serves.** It excludes an optional dependency it fails
-to resolve (`failed compatibility check`) and never writes it to the lockfile — the importer stays
-`.: {}`. `pnpm install --frozen-lockfile` then fails with `ERR_PNPM_OUTDATED_LOCKFILE` naming the
-specifier as added-but-unlocked. This does not settle after one install: no lockfile entry can
-ever exist for a package that is not published, so **every CI job would fail until the first
-publish succeeds**. Verified against pnpm 11.17.0.
+`test/packaging.test.js` still symlinks the workspace copy. Now that the platform packages
+exist it can become a true clean-room install, which is the only thing that would prove the
+*published* artifact works rather than the working tree.
 
-So the order is forced: publish the platform packages first (`napi prepublish` does this, and
-`release.yml` already runs it before anything else), *then* declare them. Rehearse against a local
-registry — Verdaccio, or `pnpm publish --dry-run` — rather than burning a real version.
-
-`release.yml`'s preflight now checks exactly this state and fails naming both items. It was
-rewritten to test the *shape* of the tree rather than the string `@emquad/binding`, which the
-rename would otherwise have satisfied while leaving the actual problem untouched.
-
-`test/packaging.test.js` still symlinks the workspace copy. Once the platform packages are
-published it becomes a true clean-room install and the symlink should go.
+The six defects the bootstrap actually cost are in
+[`../phase-4/00-publishing.md`](../phase-4/00-publishing.md).
 
 ### 2. The build matrix
 

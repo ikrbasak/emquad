@@ -4,10 +4,15 @@ A lean Node.js binding for [Typst](https://github.com/typst/typst) for PDF gener
 **VFS in → PDF out.** Positioned as a fast, light replacement for Chromium + Puppeteer PDF
 pipelines.
 
-**Status: Phases 0–3 complete. Phase 4 (distribution) not started.**
+**Status: Phases 0–4 complete. `0.0.1` is on npm.**
 `emquad-engine` compiles a VFS to a PDF, `emquad-napi` exposes it to Node, and `@emquad/core`,
-`@emquad/resolver`, and `@emquad/fonts` are the published surface. 64 Rust tests and 115 Node
-tests pass.
+`@emquad/resolver`, and `@emquad/fonts` are the published surface, over eight prebuilt
+`@emquad/typst-binding-<platform>` packages. 64 Rust tests and 115 Node tests pass, and CI is
+green across three operating systems by three Node majors.
+
+**Nothing has been installed from npm yet.** The packages resolve on the registry; that they
+load the right `.node` and compile a PDF on a machine that never built them is unverified.
+See [`phase-4/00-publishing.md`](phase-4/00-publishing.md).
 
 ## Orientation
 
@@ -18,6 +23,8 @@ tests pass.
 - [`phase-3/`](phase-3/00-overview.md) — the TypeScript packages and the worker-process pool.
   **[`phase-3/05-handoff.md`](phase-3/05-handoff.md) is where to start if you are picking up
   Phase 4.**
+- [`phase-4/00-publishing.md`](phase-4/00-publishing.md) — the first publish, and the six
+  defects it cost. Read before touching `release.yml` or `scripts/initial-publish.sh`.
 
 **Read these before writing any code:**
 
@@ -42,8 +49,8 @@ tests pass.
 | `@emquad/core` | Main package: TS API, both pools, `EmquadError`. **Built** |
 | `@emquad/fonts` | Optional default Typst fonts (9.3 MB; **four licenses, not just OFL** — see rule 11). **Built** |
 | `@emquad/resolver` | `@preview` registry resolver (TS — owns all networking; zero runtime deps). **Built** |
-| `@emquad/typst-binding` | The napi loader and generated declarations. Lives in `packages/binding`. **Still `private`** |
-| `@emquad/typst-binding-<platform>` | Prebuilt native bindings, one per target, under `packages/binding/npm/`. **Phase 4** |
+| `@emquad/typst-binding` | The napi loader and generated declarations. Lives in `packages/binding`. **Published** |
+| `@emquad/typst-binding-<platform>` | Prebuilt native bindings, one per target, under `packages/binding/npm/`. **Eight published** |
 
 `packages/core/src/binding.ts` is the only file that imports `@emquad/typst-binding`.
 
