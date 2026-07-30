@@ -1,6 +1,6 @@
 {
   "name": "@emquad/resolver",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "@preview package resolution for @emquad/core. Owns all networking.",
   "license": "MIT",
   "files": [

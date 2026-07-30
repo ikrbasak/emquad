@@ -1,6 +1,6 @@
 {
   "name": "@emquad/core",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Typst PDF generation for Node. VFS in, PDF out.",
   "license": "MIT",
   "files": [

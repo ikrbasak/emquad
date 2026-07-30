@@ -1,6 +1,6 @@
 {
   "name": "@emquad/fonts",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "The default Typst font set for @emquad/core, shipped byte-for-byte.",
   "license": "OFL-1.1 AND LPPL-1.3c AND GPL-3.0-or-later AND Bitstream-Vera",
   "files": [

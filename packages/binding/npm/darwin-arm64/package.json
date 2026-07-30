@@ -1,6 +1,6 @@
 {
   "name": "@emquad/typst-binding-darwin-arm64",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "license": "MIT",
   "files": [
     "emquad.darwin-arm64.node"
