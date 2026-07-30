@@ -129,7 +129,31 @@ trap 'rm -f "$NPMRC"' EXIT INT TERM
 
 say "1/4  Publishing the eight platform packages"
 echo "     These carry the .node files and must exist before anything depends on them."
-run napi_publish --npm-dir npm --tag-style npm
+
+# Published one at a time, skipping any already on the registry, so the whole
+# script is resumable. `napi pre-publish` is all-or-nothing: it shells out to
+# `npm publish` for every platform package, and npm refuses to republish an
+# existing version, so a run interrupted after step 1 could never be restarted.
+# That is not hypothetical — it is exactly what happened on the first attempt.
+#
+# The only thing lost by not calling napi here is its rewrite of the binding's
+# optionalDependencies, and step 3 does that anyway.
+for dir in packages/binding/npm/*/; do
+  name=$(jq -r .name "$dir/package.json")
+  if npm view "$name@$VERSION" version >/dev/null 2>&1; then
+    printf '  skip, already published: %s@%s\n' "$name" "$VERSION"
+  elif run npm publish "$dir" --access public; then
+    :
+  elif npm view "$name@$VERSION" version >/dev/null 2>&1; then
+    # `npm view` lags a successful publish by a little — the write is accepted
+    # before the read is served — so a package can be absent above and present
+    # here. Treat a failed publish whose version *is* now visible as done
+    # rather than as an error, or a resumed run trips over its own success.
+    printf '  already published, view had lagged: %s@%s\n' "$name" "$VERSION"
+  else
+    die "failed to publish $name@$VERSION"
+  fi
+done
 
 # --- 2. wait for the registry ------------------------------------------------
 
