@@ -30,13 +30,31 @@ after(async () => {
   await Promise.all(temps.map((dir) => rm(dir, { recursive: true, force: true })));
 });
 
+/**
+ * Run pnpm without going through its shell wrapper.
+ *
+ * On Windows the thing on `PATH` is `pnpm.CMD`, and Node refuses to spawn a
+ * `.cmd` or `.bat` without `shell: true` — hardening from CVE-2024-27980 — so
+ * `execFileSync("pnpm", …)` fails there with a bare `ENOENT` that reads as a
+ * missing install. `npm_execpath` points at pnpm's own `.mjs` entry, which
+ * `process.execPath` runs directly: no shell, no quoting, and demonstrably the
+ * same pnpm that launched the suite. It is set by the `test` script, whether
+ * that is run through turbo or on its own.
+ */
+function pnpm(args, options) {
+  const entry = process.env.npm_execpath;
+  return entry
+    ? execFileSync(process.execPath, [entry, ...args], options)
+    : execFileSync("pnpm", args, options);
+}
+
 async function consumer() {
   const root = await mkdtemp(join(tmpdir(), "emquad-consumer-"));
   temps.push(root);
 
   // `pnpm pack` honors the `files` list, so this is exactly the tarball that
   // would be published — not a copy of the working tree.
-  const packed = execFileSync("pnpm", ["pack", "--pack-destination", root], {
+  const packed = pnpm(["pack", "--pack-destination", root], {
     cwd: CORE,
     encoding: "utf8",
   })
