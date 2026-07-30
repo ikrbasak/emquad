@@ -1,0 +1,50 @@
+name: Setup
+description: Node, pnpm via corepack, a warm store, and installed dependencies.
+
+inputs:
+  node-version:
+    description: Node major to install.
+    default: "22"
+  install:
+    description: Run `pnpm install --frozen-lockfile`.
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v7
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    # corepack rather than pnpm/action-setup: the version comes from the
+    # `packageManager` field, so CI and every developer machine resolve the same
+    # pnpm from one declaration. It ships with Node 22, 24, and 26; the guard is
+    # for a future release that unbundles it.
+    - name: Enable corepack
+      shell: bash
+      run: |
+        if ! command -v corepack >/dev/null 2>&1; then
+          npm install --global corepack@latest
+        fi
+        corepack enable pnpm
+        pnpm --version
+
+    # Cached explicitly rather than through setup-node's `cache: pnpm`, which
+    # needs pnpm on PATH before it runs — and with corepack, pnpm does not exist
+    # until the step above. Asking pnpm for the path also keeps this correct on
+    # Windows, where the store is not under $HOME.
+    - name: Locate the pnpm store
+      id: store
+      shell: bash
+      run: echo "path=$(pnpm store path --silent)" >>"$GITHUB_OUTPUT"
+
+    - uses: actions/cache@v6
+      with:
+        path: ${{ steps.store.outputs.path }}
+        key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: pnpm-${{ runner.os }}-
+
+    - name: Install dependencies
+      if: inputs.install == 'true'
+      shell: bash
+      run: pnpm install --frozen-lockfile

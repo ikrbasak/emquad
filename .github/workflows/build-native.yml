@@ -88,18 +88,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v6
-
-      # The Alpine image already carries Node; setup-node inside a container
-      # fights with it and gains nothing.
-      - uses: actions/setup-node@v7
+      # The Alpine image already carries Node and a toolchain; setup-node inside
+      # it fights with that and gains nothing, so corepack and the install are
+      # run directly there instead.
+      - uses: ./.github/actions/setup
         if: ${{ !matrix.alpine }}
-        with:
-          node-version: 22
-          cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Set up dependencies (Alpine)
+        if: ${{ matrix.alpine }}
+        shell: bash
+        run: |
+          corepack enable pnpm
+          pnpm install --frozen-lockfile
 
       - name: Show Rust toolchain
         run: rustup show

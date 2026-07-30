@@ -50,12 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
       - run: pnpm turbo run build --filter @emquad/resolver
 
       # The mocked registry could encode the wrong URL shape or tarball layout
@@ -73,12 +68,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
       - run: rustup show
       - uses: Swatinem/rust-cache@v2
         with:
