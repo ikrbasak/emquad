@@ -43,3 +43,19 @@ targets = [
   "x86_64-pc-windows-msvc",
   "aarch64-pc-windows-msvc",
 ]
+
+# miniz_oxide ships the MIT text twice — `LICENSE` and `LICENSE-MIT.md` — and
+# the two differ by one blank line. Which one cargo-about picks follows the
+# order the directory is read in, so macOS chose one and the Linux runner the
+# other, and the committed file was "stale" on exactly one machine at a time.
+#
+# Naming the file pins the choice. `LICENSE-MIT.md` is the copy the crate
+# designates as its MIT text; the checksum makes a change to it a build failure
+# rather than a silent swap of the terms we reproduce.
+[miniz_oxide.clarify]
+license = "MIT"
+
+[[miniz_oxide.clarify.files]]
+path = "LICENSE-MIT.md"
+license = "MIT"
+checksum = "799e9ca9d179295ef372f25d3769cdda7d25bb2668add6a6a1e22d1e4c678b8d"
