@@ -10,8 +10,10 @@ pipelines.
 `@emquad/typst-binding-<platform>` packages. 64 Rust tests and 115 Node tests pass, and CI is
 green across three operating systems by three Node majors.
 
-**Nothing has been installed from npm yet.** The packages resolve on the registry; that they
-load the right `.node` and compile a PDF on a machine that never built them is unverified.
+**Verified from the registry on `darwin-arm64` only.** A clean install pulls four packages —
+`os`/`cpu` gating picks one platform binding out of eight — and compiles a PDF with an embedded
+font subset through both pools. The other seven platform packages are published and correctly
+gated but have never been installed on their own platform.
 See [`phase-4/00-publishing.md`](phase-4/00-publishing.md).
 
 ## Orientation

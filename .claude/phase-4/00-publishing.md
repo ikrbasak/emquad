@@ -81,6 +81,21 @@ packages now exist, so it can become a true clean-room install from the registry
 — which is the only thing that would prove the published artifact works, as
 opposed to the working tree working.
 
-**Nothing has been installed from npm yet.** The packages are published; that
-they resolve, load the right `.node`, and compile a PDF on a machine that never
-built them is unverified.
+## Verified from the registry
+
+A clean `npm install @emquad/core @emquad/fonts` into an empty project, with no
+workspace and nothing built locally, installs **four** packages: core, fonts,
+the loader, and exactly one platform binding — `os`/`cpu` gating picks the
+matching one and skips the other seven. The installed `.node` is 29.7 MB, which
+matches the measured figure.
+
+From there it compiles: typst 0.15.1, one page, 8537 bytes, zero warnings, and
+an embedded font subset — that last check matters more than the page count,
+because a PDF with every text run silently dropped is still a valid PDF with the
+right page count. The process pool also runs, which is the only way to prove
+`dist/worker.js` survived packing and still resolves relative to the bundle in
+an installed layout.
+
+So the distribution mechanism works. What is *not* covered: this exercised
+`darwin-arm64` only. The other seven platform packages are published and
+correctly gated, but none has been installed on its own platform.
