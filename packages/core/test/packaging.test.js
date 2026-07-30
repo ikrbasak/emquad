@@ -6,16 +6,31 @@
 // that drops `dist/worker.js`, or an ESM loader problem that never appears when
 // tests import `../dist/index.js` by relative path.
 //
-// **What it does not yet cover.** The native addon is resolved through
-// `@emquad/typst-binding`, which is still private: it cannot be published until
-// the `@emquad/typst-binding-<platform>` packages it declares as
-// `optionalDependencies` exist in a registry. Until then this links the
-// workspace copy rather than installing. Everything above that line — the
-// exports map, the file list, the ESM entry — is real and is what this asserts.
+// The addon is reached the way a published install reaches it: `@emquad/core`
+// and `@emquad/typst-binding` are both packed, and a platform package is
+// assembled beside them holding the only copy of the `.node`. That last part is
+// what makes the test meaningful — the loader prefers
+// `require("@emquad/typst-binding-<triple>")` and falls back to a `.node` lying
+// beside `index.js`, and it was the *fallback* this exercised for as long as it
+// symlinked the workspace directory. The fallback is the one branch a published
+// user never takes.
+//
+// **What it still does not cover.** Nothing is fetched from a registry, so
+// `optionalDependencies` resolution — the `os`/`cpu`/`libc` gating that decides
+// which of the eight a user actually downloads — is not exercised here. That
+// needs a real install on each platform.
 
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -67,27 +82,54 @@ async function consumer() {
   mkdirSync(target, { recursive: true });
   execFileSync("tar", ["-xzf", packed, "-C", target, "--strip-components=1"]);
 
-  // The two dependencies that are not part of what is being tested. Linked
-  // rather than packed: `@emquad/typst-binding` is still private until the
-  // platform packages exist, and `@emquad/fonts` is only here to give the
-  // consumer something to compile.
+  // The binding is packed rather than symlinked, and its platform package is
+  // built by hand below, so the loader takes the path a real install takes.
   //
-  // Directory name and package name diverge for the binding — it lives in
-  // `packages/binding` but publishes as `@emquad/typst-binding` — so the two
-  // are listed separately rather than one being derived from the other.
-  for (const [dir, name] of [
-    ["binding", "typst-binding"],
-    ["fonts", "fonts"],
-  ]) {
-    symlinkSync(join(PACKAGES, dir), join(modules, name), "dir");
-  }
+  // Symlinking `packages/binding` wholesale — what this did before the platform
+  // packages existed — puts the built `.node` right beside `index.js`, which is
+  // the loader's *development* fallback. That branch is the one thing a
+  // published user never reaches, so the resolution chain that actually ships
+  // (`require("@emquad/typst-binding-<triple>")`) went untested.
+  const bindingTarball = pnpm(["pack", "--pack-destination", root], {
+    cwd: join(PACKAGES, "binding"),
+    encoding: "utf8",
+  })
+    .trim()
+    .split("\n")
+    .at(-1);
+  const binding = join(modules, "typst-binding");
+  mkdirSync(binding, { recursive: true });
+  execFileSync("tar", ["-xzf", bindingTarball, "-C", binding, "--strip-components=1"]);
+
+  // Derived from whatever the build produced rather than recomputed from
+  // `process.platform`/`arch`: reimplementing napi's triple would mean
+  // reimplementing its musl detection, and getting that subtly wrong would make
+  // the test pass against a name no real install uses.
+  const built = readdirSync(join(PACKAGES, "binding")).find((f) => f.endsWith(".node"));
+  assert.ok(built, "no built .node in packages/binding — run the binding build first");
+  const triple = built.slice("emquad.".length, -".node".length);
+
+  const platform = join(modules, `typst-binding-${triple}`);
+  mkdirSync(platform, { recursive: true });
+  writeFileSync(
+    join(platform, "package.json"),
+    JSON.stringify({
+      name: `@emquad/typst-binding-${triple}`,
+      version: JSON.parse(readFileSync(join(binding, "package.json"), "utf8")).version,
+      main: built,
+    }),
+  );
+  copyFileSync(join(PACKAGES, "binding", built), join(platform, built));
+
+  // Only fonts stays a symlink — it is scenery, not the thing under test.
+  symlinkSync(join(PACKAGES, "fonts"), join(modules, "fonts"), "dir");
 
   writeFileSync(
     join(root, "package.json"),
     JSON.stringify({ name: "consumer", private: true, type: "module" }, null, 2),
   );
 
-  return { root, target };
+  return { root, target, binding, triple };
 }
 
 test("the packed tarball ships what it promises", async () => {
@@ -104,6 +146,36 @@ test("the packed tarball ships what it promises", async () => {
   // subpath imports in it resolve to files the published package does not have.
   assert.ok(!existsSync(join(target, "src")), "src/ should not be published");
   assert.ok(!readdirSync(target).includes("tsconfig.json"));
+});
+
+test("the binding ships the loader and no binaries", async () => {
+  const { binding, triple } = await consumer();
+
+  // 29 MB per target, sixteen copies, in a package every user installs
+  // regardless of platform — that is what this guards. It is not hypothetical:
+  // `npm pack` here produced a 226 MB tarball until `files` was set, and the
+  // only reason the published 0.0.1 escaped is that `changeset publish` shells
+  // out to pnpm, which honours `.gitignore` where npm does not. Relying on that
+  // difference is how the platform-package split gets quietly undone.
+  const shipped = readdirSync(binding);
+  assert.deepEqual(
+    shipped.filter((f) => f.endsWith(".node")),
+    [],
+    `binding tarball contains binaries: ${shipped.join(", ")}`,
+  );
+  assert.ok(
+    !shipped.includes("npm"),
+    "npm/ holds the platform packages' manifests, not this one's",
+  );
+
+  // And therefore the compile above could only have reached the addon through
+  // `require("@emquad/typst-binding-<triple>")`. With no `.node` beside
+  // `index.js`, the loader's development fallback is unreachable — which is the
+  // point, because that fallback is the branch no published user ever takes.
+  assert.ok(
+    existsSync(join(binding, "..", `typst-binding-${triple}`, `emquad.${triple}.node`)),
+    "the platform package should be the only source of the addon",
+  );
 });
 
 test("a clean ESM consumer can import and compile", async () => {
