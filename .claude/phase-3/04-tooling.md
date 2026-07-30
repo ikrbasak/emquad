@@ -127,6 +127,64 @@ as intent or regression.
 Regeneration is never automatic. A golden nobody reads is worse than no golden at all, and a
 workflow that regenerates on failure trains reviewers not to read them.
 
+## Continuous integration
+
+Four workflows under `.github/workflows/`. Validate changes with `actionlint`
+(`brew install actionlint`) — it catches retired runner labels and expression syntax that a YAML
+parser accepts happily.
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `ci.yml` | PR, `main`, merge queue | lint, typecheck, licenses, tests, conditionally the native matrix |
+| `build-native.yml` | called by the other two | one job per shipping target |
+| `nightly.yml` | 03:00 UTC, manual | soak, interner pressure, real registry, benchmarks, full matrix |
+| `release.yml` | `v*` tag, manual | preflight, matrix, verify, publish |
+
+**`ci` is a single required check.** It gates on `join(needs.*.result)` rather than enumerating
+jobs, so branch protection does not have to be edited whenever a target is added. It treats
+`skipped` as acceptable and `cancelled` as failure — `build-native` is legitimately skipped when a
+PR does not touch the Rust tree.
+
+**Jobs are ordered by how fast they can say no.** `lint` and `typecheck` need no native addon and
+report in under a minute; `typecheck` in particular builds nothing at all, which is why
+`turbo.json` deliberately gives it no `dependsOn`. The test matrix is the long pole.
+
+**The native matrix is conditional.** A `changes` job diffs against the PR base and only runs
+`build-native` when `crates/`, `Cargo.*`, `rust-toolchain.toml`, `packages/binding/`, or the
+workflows themselves changed. On `main` it always runs.
+
+### Things encoded in the workflows that are easy to get wrong
+
+**Publish order is not recoverable.** Platform packages must reach the registry *before*
+`@emquad/core`, or the first person to install it resolves `optionalDependencies` that do not
+exist yet and silently gets no native binding. Republishing core does not repair an install that
+already failed.
+
+**`release.yml` refuses to run today, on purpose.** A preflight job checks that
+`napi.packageName` is set and that `@emquad/core` no longer depends on the private
+`@emquad/binding`, and fails with the specific fix rather than producing broken packages an hour
+later.
+
+**Only some targets can be smoke-tested.** Loading the addon requires the runner's architecture to
+match the target's, so `aarch64-*-linux-*` and `aarch64-pc-windows-msvc` are build-only. The
+matrix carries an explicit `smoke` flag rather than inferring it.
+
+**`macos-15-intel`, not `macos-13`.** GitHub retired the latter, and `macos-latest` is arm64 —
+building `x86_64-apple-darwin` there would cross-compile and lose the smoke test.
+
+**Golden-file diffs are uploaded on failure.** Without the artifact a mismatch is a percentage
+with nothing to look at, and "just regenerate the goldens" becomes the path of least resistance.
+The references were generated on `aarch64-apple-darwin`; if a Linux or Windows runner exceeds the
+0.1% threshold, read the diff mask before touching the threshold.
+
+**Benchmarks are recorded, not asserted.** Shared runners are too noisy for a pass/fail
+performance gate, and a flaky one gets muted rather than investigated. They write to the job
+summary; read the trend.
+
+**Dependabot ignores `typst*` and `comemo`.** Typst is pinned exactly because it is pre-1.0 and
+breaks across minor releases. A bump is a deliberate change with a golden-file re-run, never an
+automatic PR.
+
 ## Test commands worth knowing
 
 ```sh

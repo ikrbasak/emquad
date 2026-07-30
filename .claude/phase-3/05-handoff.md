@@ -54,16 +54,29 @@ environment for the other eleven.
 - `optionalDependencies` resolution skips incompatible platforms rather than failing.
 - The clean-consumer ESM smoke test, from a registry rather than a symlink.
 
-### 4. CI
+### 4. CI — already written, never yet run
 
-[`../plan/07-testing-strategy.md`](../plan/07-testing-strategy.md) has the shape. Per PR: Rust,
-golden files, Node integration, resolver, ESM smoke. Nightly: soak, interner pressure, the
-real-registry test, benchmark regression.
+Four workflows exist under `.github/workflows/`, covering the shape in
+[`../plan/07-testing-strategy.md`](../plan/07-testing-strategy.md). `actionlint` passes on all of
+them, but **no run has ever happened** — there was no remote when they were written. Expect to
+shake something out on the first push. Details in [`04-tooling.md`](04-tooling.md#continuous-integration).
 
-The golden files need a note in CI: references were generated on `aarch64-apple-darwin`, and the
-0.1% pixel threshold is what absorbs cross-architecture rasterization differences. If another
-architecture exceeds it, **investigate before raising the threshold** — the failure artifacts in
-`test/golden/diff/` will show whether it is antialiasing or a real change.
+`release.yml` deliberately fails its preflight until job 1 above is done, naming exactly what is
+missing.
+
+Two things to watch on the first real run:
+
+- **The golden files may fail on Linux or Windows.** References were generated on
+  `aarch64-apple-darwin` and the 0.1% pixel threshold is what absorbs cross-architecture
+  rasterization differences — but whether it is *wide enough* has never been tested, because
+  there was nowhere to test it. If a runner exceeds it, the diff mask is uploaded as an artifact.
+  **Read it before touching the threshold.** A missing table header moves thousands of pixels;
+  antialiasing moves tens. If it turns out to be genuine cross-architecture noise, per-architecture
+  references are the honest fix, not a wider threshold.
+- **The musl and cross targets are the least certain.** Phase 0 proved all fourteen targets
+  *compile* using a host approximation of the cross environment (`spike/xtarget/sweep2.sh`). The
+  workflow uses napi-rs's Alpine image and `--use-napi-cross` instead, which is the documented
+  path but not the one that was measured.
 
 ## Things not to break
 
