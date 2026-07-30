@@ -1,2 +1,12 @@
 packages:
   - packages/*
+
+# pnpm 11 refuses to run a dependency's build scripts unless it is listed here,
+# and treats an undecided one as a hard install error. Locally the decision is
+# cached under node_modules, so this only surfaces on a clean checkout — which
+# is every CI job, and was the first thing CI failed on.
+#
+# lefthook's postinstall places its platform binary, which the root `prepare`
+# script then uses to install the git hooks.
+allowBuilds:
+  lefthook: true
