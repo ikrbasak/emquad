@@ -136,6 +136,13 @@ jobs:
         if: ${{ matrix.alpine }}
         shell: bash
         run: |
+          # The container runs as root over a workspace owned by the runner
+          # user, so git refuses it as "dubious ownership". checkout sets this
+          # too, but only in a temporary HOME it discards afterwards. It matters
+          # because the root `prepare` script runs `lefthook install`, which
+          # shells out to git — so the install fails after everything has
+          # already been fetched.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           corepack enable pnpm
           pnpm --version
           pnpm install --frozen-lockfile
@@ -184,11 +191,15 @@ jobs:
       # A binary that builds but will not load is a release incident, and the
       # loader is exactly the part a build cannot exercise. Only runnable where
       # the target's architecture matches the runner's.
+      #
+      # The script is written into the workspace rather than a temp directory:
+      # an ESM relative specifier resolves against the importing *file*, not the
+      # working directory, so from /tmp it looked for /tmp/packages/binding.
       - name: Smoke test the addon
         if: matrix.smoke
         shell: bash
         run: |
-          cat >/tmp/smoke.mjs <<'JS'
+          cat >smoke.mjs <<'JS'
           import { typstVersion } from "./packages/binding/index.js";
           const version = typstVersion();
           if (version !== "0.15.1") {
@@ -196,7 +207,8 @@ jobs:
           }
           console.log(`loaded ${process.platform}/${process.arch}, typst ${version}`);
           JS
-          node /tmp/smoke.mjs
+          node ./smoke.mjs
+          rm smoke.mjs
 
       # Hard rule 4, checked per target rather than only on the host: a
       # platform-specific dependency could pull a `-sys` crate in for one
