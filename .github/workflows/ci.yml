@@ -86,7 +86,7 @@ jobs:
         with:
           shared-key: linux-debug
 
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@v2.85.2
         with:
           tool: cargo-deny
 
