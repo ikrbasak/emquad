@@ -19,7 +19,7 @@ not started. The brief is
 
 ## Phase 3's four jobs
 
-### 1. The public API, over `@emquad/binding`
+### 1. The public API, over `@emquad/typst-binding`
 
 Fluent, fully typed, ESM-only. The binding's surface is deliberately low-level; `@emquad/core`
 is what users import.

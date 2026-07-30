@@ -49,7 +49,7 @@ pays several minutes of LTO link, later runs pay nothing.
 packages/core/
   src/
     index.ts           public surface
-    binding.ts         the ONE import of @emquad/binding — Phase 4 edits this file
+    binding.ts         the ONE import of @emquad/typst-binding — Phase 4 edits this file
     compiler.ts        Compiler: validates options, picks a backend
     document.ts        the fluent per-document builder
     errors.ts          EmquadError, diagnostics, code normalization
@@ -97,7 +97,7 @@ no-op, so the option cannot be mistaken for protection it is not providing.
 
 ### A failed compile throws here, unlike in the binding
 
-`@emquad/binding` *returns* `{ ok: false, error }` because a rejected promise can only carry a
+`@emquad/typst-binding` *returns* `{ ok: false, error }` because a rejected promise can only carry a
 `napi::Error`. `@emquad/core` converts that into a thrown `EmquadError` with `code`, `file`,
 `line`, `column`, `diagnostics`, and `hints` as real fields. That conversion is the reason this
 layer exists at all — a JS `Error` subclass cannot be constructed from Rust.

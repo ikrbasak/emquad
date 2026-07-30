@@ -42,11 +42,21 @@ tests pass.
 | `@emquad/core` | Main package: TS API, both pools, `EmquadError`. **Built** |
 | `@emquad/fonts` | Optional default Typst fonts (9.3 MB; **four licenses, not just OFL** — see rule 11). **Built** |
 | `@emquad/resolver` | `@preview` registry resolver (TS — owns all networking; zero runtime deps). **Built** |
-| `@emquad/typst-binding-<platform>` | Prebuilt native bindings, one per target. **Phase 4** |
-| `@emquad/binding` | **Internal.** The napi addon and its generated bindings; not published |
+| `@emquad/typst-binding` | The napi loader and generated declarations. Lives in `packages/binding`. **Still `private`** |
+| `@emquad/typst-binding-<platform>` | Prebuilt native bindings, one per target, under `packages/binding/npm/`. **Phase 4** |
 
-`packages/core/src/binding.ts` is the only file that imports `@emquad/binding`. Phase 4 changes
-that one file to consume the platform packages instead.
+`packages/core/src/binding.ts` is the only file that imports `@emquad/typst-binding`.
+
+> Renamed from `@emquad/binding` in Phase 4. The directory is still
+> `packages/binding` — directory name and package name deliberately diverge, because the
+> published name has to carry the `typst-binding` prefix that napi derives the eight platform
+> package names from.
+
+The loader resolves `@emquad/typst-binding-<platform>` at require time and falls back to a
+`.node` beside itself, which is what makes local development work with no platform packages
+installed. It stays `private` until those packages are published — see
+[`phase-3/05-handoff.md`](phase-3/05-handoff.md) for why that ordering is forced rather than
+chosen.
 
 Rust crates: `emquad-engine` (pure core, no napi) and `emquad-napi` (thin binding layer).
 

@@ -18,8 +18,8 @@ Three packages, one compiler seam, two pools.
                     └──────┬──────────────────┬─────────────┘
                            │                  │ fork + IPC
                            ▼                  ▼
-                   @emquad/binding      worker.js × N
-                   (napi addon)         each → @emquad/binding
+                   @emquad/typst-binding      worker.js × N
+                   (napi addon)         each → @emquad/typst-binding
 ```
 
 `@emquad/fonts` and `@emquad/resolver` have **no dependency on `@emquad/core`**, in either
@@ -31,8 +31,8 @@ a user who brings their own fonts installs neither.
 
 ### The binding seam
 
-`src/binding.ts` is the only file in the package that names `@emquad/binding`. Everything else
-imports through it. That is deliberate: `@emquad/binding` is internal to this repo and is never
+`src/binding.ts` is the only file in the package that names `@emquad/typst-binding`. Everything else
+imports through it. That is deliberate: `@emquad/typst-binding` is internal to this repo and is never
 published, so Phase 4 has to change how the addon is located — vendoring the generated loader and
 depending on `@emquad/typst-binding-<platform>` optional packages. When it does, this is the one
 file that changes.

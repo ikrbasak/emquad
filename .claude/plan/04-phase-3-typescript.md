@@ -73,7 +73,7 @@ it must be explicitly named and loudly documented.
 `severity`, and `hints` as real fields — not a formatted string. Warnings are returned
 alongside successful output, not discarded.
 
-Constructing it is Phase 3's job specifically: `@emquad/binding` **returns** compile failures
+Constructing it is Phase 3's job specifically: `@emquad/typst-binding` **returns** compile failures
 rather than throwing, because a promise rejection can only carry a message and a status. See
 [`../phase-2/02-api-guide.md`](../phase-2/02-api-guide.md).
 
