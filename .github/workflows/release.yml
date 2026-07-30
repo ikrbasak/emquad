@@ -221,7 +221,8 @@ jobs:
       - name: Publish platform packages (OIDC)
         id: platform_oidc
         continue-on-error: true
-        run: pnpm exec napi prepublish --skip-gh-release --tag-style npm
+        working-directory: packages/binding
+        run: pnpm exec napi pre-publish --npm-dir npm --tag-style npm
 
       - name: Publish platform packages (token fallback)
         if: steps.platform_oidc.outcome == 'failure'
@@ -234,7 +235,7 @@ jobs:
             exit 1
           fi
           echo "::warning::Published the platform packages with a long-lived token; OIDC did not succeed."
-          pnpm exec napi prepublish --skip-gh-release --tag-style npm
+          cd packages/binding && pnpm exec napi pre-publish --npm-dir npm --tag-style npm
 
       # `changeset publish` rather than a hand-ordered loop, for two properties
       # the loop did not have. It publishes in topological order, so

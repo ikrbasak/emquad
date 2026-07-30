@@ -44,6 +44,20 @@ run() {
   fi
 }
 
+# Two reasons this runs from packages/binding rather than the repo root.
+#
+# napi's bin is linked only into packages/binding/node_modules/.bin — pnpm does
+# not hoist it to the workspace root — so `pnpm exec napi` from here fails with
+# a bare `Command "napi" not found`. And every napi path option is relative to
+# the working directory, so from the root it would read the *root* package.json
+# and look for a top-level `npm/`, finding neither the targets nor the platform
+# packages.
+#
+# No `--skip-gh-release`: that was the napi-rs v2 spelling and v3 rejects it
+# outright ("Unsupported option name"). v3 inverted it to an opt-in
+# `--gh-release`, so not creating a release is now simply the default.
+napi_publish() { (cd packages/binding && pnpm exec napi pre-publish "$@"); }
+
 # --- preconditions -----------------------------------------------------------
 # Every one of these is something that produces a broken *published* package
 # rather than a failed command, which is why they are checked before anything
@@ -97,7 +111,7 @@ trap 'rm -f "$NPMRC"' EXIT INT TERM
 
 say "1/4  Publishing the eight platform packages"
 echo "     These carry the .node files and must exist before anything depends on them."
-run pnpm exec napi prepublish --skip-gh-release --tag-style npm
+run napi_publish --npm-dir npm --tag-style npm
 
 # --- 2. wait for the registry ------------------------------------------------
 
