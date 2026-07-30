@@ -8,9 +8,9 @@
 name: Nightly
 
 on:
-  schedule:
-    # 03:00 UTC. Nothing depends on the hour; it is off-peak for the runners.
-    - cron: "0 3 * * *"
+  # schedule:
+  #   # 03:00 UTC. Nothing depends on the hour; it is off-peak for the runners.
+  #   - cron: "0 3 * * *"
   workflow_dispatch:
 
 permissions:
