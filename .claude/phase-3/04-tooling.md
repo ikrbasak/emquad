@@ -194,6 +194,24 @@ axis: it never touches Node, so it is gated to the Node 22 row of each OS. Every
 compiles the addon in debug (that is what `@emquad/binding#test` does), so the rows of one OS
 share a single `rust-cache` key and only the first pays for the dependency tree.
 
+**The grid earned itself on its first green run**, by failing in two ways a diagonal would have
+missed. Both are recorded below; the general lesson is that a declared support floor nobody
+exercises is a claim, not a fact.
+
+**The tests may not use `await using`, because the packages support Node 22.** Explicit resource
+management is V8 13.8 — Node 24 and up. The *runtime* half is fine on Node 22 (`Compiler`
+implements `Symbol.asyncDispose`, and the symbol has existed since Node 20); it is purely the
+declaration syntax the parser rejects, and it rejects it at load time, so one `await using`
+anywhere takes the whole file down. The suites use `try`/`finally` instead. That is also the
+closer equivalent: `await using` disposes at scope exit, whereas hanging the close on a
+`t.after()` hook would defer it past the end of the test body — which matters in
+`process-pool.test.js`, where assertions depend on workers having already been killed.
+
+**`import.meta.url` needs `fileURLToPath`, never `.pathname`.** On Windows `.pathname` yields
+`/D:/a/emquad/emquad` — a URL path, not a filesystem path. Passing it as a `cwd` to `spawnSync`
+fails, and the error names the *executable* rather than the directory, so the whole Windows column
+reported `Error: spawnSync cargo ENOENT` and read for all the world like a missing Rust toolchain.
+
 **Tools are downloaded, not compiled.** `cargo install cargo-about` took two and a half minutes
 to build a tool that runs for twenty seconds; the prebuilt release binary is used instead, pinned
 to 0.9.1 because the notices check compares generated output byte for byte.
@@ -213,6 +231,18 @@ later.
 **Only some targets can be smoke-tested.** Loading the addon requires the runner's architecture to
 match the target's, so `aarch64-*-linux-*` and `aarch64-pc-windows-msvc` are build-only. The
 matrix carries an explicit `smoke` flag rather than inferring it.
+
+**The smoke script lives in the workspace, not in `/tmp`.** An ESM relative specifier resolves
+against the importing *file*, not the working directory, so a script written to `/tmp` looked for
+`/tmp/packages/binding/index.js` and every smoke-enabled target failed with `ERR_MODULE_NOT_FOUND`.
+Worth noting how long this hid: the step had never once run to completion, because earlier runs
+were cancelled or failed upstream. A step that has never executed is not a step that passes.
+
+**Alpine needs `safe.directory` before `pnpm install`.** The container runs as root over a
+workspace owned by the runner user, so git rejects it as "dubious ownership". `actions/checkout`
+does set this, but in a temporary `HOME` it discards on the way out. It surfaces late and
+confusingly: the root `prepare` script runs `lefthook install`, which shells out to git, so the
+install fails with `exit status 128` *after* every package has already been fetched and linked.
 
 **`macos-15-intel`, not `macos-13`.** GitHub retired the latter, and `macos-latest` is arm64 —
 building `x86_64-apple-darwin` there would cross-compile and lose the smoke test.
