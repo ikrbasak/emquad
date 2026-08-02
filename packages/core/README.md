@@ -236,6 +236,12 @@ day's work, not an afternoon's. Budget for that rather than for a drop-in swap.
 What you stop maintaining: a Chromium install in your image, browser-crash recovery, and
 `page.setContent` timing races.
 
+## Examples
+
+Runnable, in [`examples/`](https://github.com/ikrbasak/emquad/tree/main/examples): a data-driven
+invoice, a report with an SVG chart, and a 400-row table spanning pages. Each one demonstrates a
+rule from above in code rather than prose.
+
 ## Related
 
 - [`@emquad/fonts`](https://www.npmjs.com/package/@emquad/fonts) — the default Typst faces

@@ -39,6 +39,15 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
+  examples:
+    dependencies:
+      '@emquad/core':
+        specifier: workspace:*
+        version: link:../packages/core
+      '@emquad/fonts':
+        specifier: workspace:*
+        version: link:../packages/fonts
+
   packages/binding:
     devDependencies:
       '@napi-rs/cli':

@@ -50,6 +50,9 @@ export default defineConfig({
         // dependency of a published package — which also puts it outside the
         // glob above.
         "benchmarks/**",
+        // Examples are scripts a reader runs and watches. Printing what they
+        // produced is the point.
+        "examples/**",
         // Maintenance scripts: run by hand, and reporting what they did is the
         // whole point of them.
         "**/scripts/**",

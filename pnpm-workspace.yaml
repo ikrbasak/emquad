@@ -1,5 +1,12 @@
 packages:
   - packages/*
+  # A member so the examples can `import { Compiler } from "@emquad/core"` —
+  # the same specifier a user writes. Importing `../packages/core/dist` instead
+  # would make them run while demonstrating something nobody can copy.
+  #
+  # `benchmarks/` is deliberately *not* here: it depends on Puppeteer, which
+  # must never be resolvable from a published package's dependency graph.
+  - examples
 
 # pnpm 11 refuses to run a dependency's build scripts unless it is listed here,
 # and treats an undecided one as a hard install error. Locally the decision is

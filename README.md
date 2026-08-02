@@ -41,6 +41,7 @@ const { pdf, warnings } = await compiler
 | `packages/fonts/` | `@emquad/fonts` — 17 default faces, four licenses. **Done** |
 | `packages/binding/` | `@emquad/typst-binding` — the napi loader, plus eight platform packages |
 | `scripts/` | Dependency guard and benchmark comparison harness |
+| `examples/` | Runnable examples: invoice, chart, multi-page table |
 | `benchmarks/` | The Puppeteer comparison. Outside the workspace on purpose |
 | `.claude/` | Plan, research, and phase documentation |
 
