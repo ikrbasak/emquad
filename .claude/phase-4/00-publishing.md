@@ -128,39 +128,47 @@ pinned to `0.0.1`. Publishing that ships a new loader that resolves the
 native code, drifting one release further every time. Nothing downstream would
 notice.
 
-Fixed by `scripts/sync-binding-optional-deps.mjs`, chained into
-`changeset:version` and enforced as a release preflight with `--check`. It pins
+Fixed by `scripts/sync-binding-optional-deps.mjs`, which runs **inside the
+release workflow**, after the platform packages are published and before the
+loader follows them. It pins
 exact versions, not ranges: the loader and its binary come from one source tree
 in one CI run, and a caret would let npm pair a loader with a binary it was never
 tested against.
 
-**The version bump empties the lockfile of platform packages.** Immediately after
-the bump, `pnpm install --frozen-lockfile` fails —
+**And the fix cannot be committed, which took a red CI run to learn.** Bumping
+those eight entries to `0.0.2` in the tree breaks `pnpm install --frozen-lockfile`
+everywhere:
 
 ```
-@emquad/typst-binding-win32-x64-msvc (lockfile: 0.0.1, manifest: 0.0.2)
+[ERR_PNPM_OUTDATED_LOCKFILE] pnpm-lock.yaml is not up to date with packages/binding/package.json
 ```
 
-— and refreshing the lockfile does not fix it so much as paper over it: pnpm
-**silently drops** all eight entries, because nothing in the registry serves
-`0.0.2` yet. The lockfile goes from recording them at `0.0.1` to recording
-nothing, and `--frozen-lockfile` then passes because the manifest and lockfile
-agree they are unresolvable.
+Refreshing the lockfile looks like it fixes it and does not. pnpm **silently
+drops** all eight entries — nothing serves `0.0.2` yet — so the lockfile goes
+from recording them at `0.0.1` to recording nothing, and `--frozen-lockfile`
+passes **locally**. It then fails on every CI job, because that decision is
+cached under `node_modules` and a clean checkout re-derives it. This is the same
+shape as the `allowBuilds` failure that opened Phase 4: *a local pass is not
+evidence when the state that makes it pass is not committed.*
 
-That is survivable and is what the committed state looks like between a version
-bump and its publish. It is worth knowing two things about it:
+So the rule is: **the committed `optionalDependencies` always name the previous
+release.** They are rewritten during publish, in the window between the platform
+packages going out and the loader following them — the first moment the new
+version is a specifier anything can resolve.
 
-- **CI after a version bump never installs a real platform package.** It falls
-  back to the `.node` built beside the loader, which is the development path. Do
-  not read a green CI run there as evidence the published artifact resolves.
-- **The entries come back on the next `pnpm install` after the release**, once
-  the registry serves the new version. Expect the lockfile to churn in both
-  directions around every release.
+Two consequences worth carrying:
 
-The ordering constraint underneath is the same one that forced a laptop script
-for `0.0.1`: **the platform packages must exist in the registry before anything
-can depend on them.** `release.yml` satisfies it by publishing them with
-`napi pre-publish` before `changeset publish` runs.
+- **The tree is never self-consistent about this**, by design. A `0.0.2` loader
+  sits next to `optionalDependencies` naming `0.0.1` until the release runs.
+  That looks like a bug and is not; the preflight says so explicitly.
+- **CI never installs a real platform package.** It falls back to the `.node`
+  built beside the loader, which is the development path. Do not read green CI
+  as evidence that the published artifact resolves — only a registry install
+  proves that.
+
+The ordering constraint underneath is the one that forced a laptop script for
+`0.0.1`: **the platform packages must exist in the registry before anything can
+depend on them.**
 
 ## Verified from the registry
 

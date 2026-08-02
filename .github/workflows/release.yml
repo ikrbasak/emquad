@@ -112,14 +112,13 @@ jobs:
 
           exit $fail
 
-      # The check above counts optionalDependencies; this one checks their
-      # *versions*. `napi version` bumps the platform packages and leaves the
-      # loader's optionalDependencies alone, so without this a release publishes
-      # a new loader pinned to the previous release's binaries. It installs,
-      # loads, and compiles — with stale native code, drifting further every
-      # version. Nothing downstream would notice.
-      - name: The binding points at the platform packages it ships with
-        run: node scripts/sync-binding-optional-deps.mjs --check
+      # Deliberately *not* checked here: that the loader's optionalDependencies
+      # match the version being released. In the committed tree they point at
+      # the **previous** release, and they have to — pnpm cannot lock a
+      # specifier no registry serves, so bumping them before the platform
+      # packages are published turns `--frozen-lockfile` red in every job on
+      # every branch. They are rewritten during publish, between the platform
+      # packages going out and the loader following them.
 
   build:
     name: Build
@@ -250,6 +249,21 @@ jobs:
           fi
           echo "::warning::Published the platform packages with a long-lived token; OIDC did not succeed."
           cd packages/binding && pnpm exec napi pre-publish --npm-dir npm --tag-style npm
+
+      # **This is the only point at which the loader can name this release's
+      # binaries.** `napi version` bumps the eight platform packages and leaves
+      # the loader's `optionalDependencies` alone, so without this step the
+      # loader publishes pinned to the *previous* release's binaries: it
+      # installs, it loads, it compiles, with stale native code, drifting one
+      # release further every time, and nothing downstream notices.
+      #
+      # It cannot be done earlier and committed. pnpm cannot lock a specifier no
+      # registry serves, so a committed bump fails `--frozen-lockfile` in every
+      # job until the platform packages exist — which is exactly the ordering
+      # that forced a laptop script for `0.0.1`. The packages exist as of the
+      # step above, so this is the first moment it is true.
+      - name: Point the loader at the platform packages just published
+        run: node scripts/sync-binding-optional-deps.mjs
 
       # `changeset publish` rather than a hand-ordered loop, for two properties
       # the loop did not have. It publishes in topological order, so

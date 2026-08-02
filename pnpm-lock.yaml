@@ -53,6 +53,31 @@ importers:
       '@napi-rs/cli':
         specifier: ^3.8.0
         version: 3.8.0(@emnapi/runtime@1.11.2)(@types/node@26.1.2)
+    optionalDependencies:
+      '@emquad/typst-binding-darwin-arm64':
+        specifier: 0.0.1
+        version: 0.0.1
+      '@emquad/typst-binding-darwin-x64':
+        specifier: 0.0.1
+        version: 0.0.1
+      '@emquad/typst-binding-linux-arm64-gnu':
+        specifier: 0.0.1
+        version: 0.0.1
+      '@emquad/typst-binding-linux-arm64-musl':
+        specifier: 0.0.1
+        version: 0.0.1
+      '@emquad/typst-binding-linux-x64-gnu':
+        specifier: 0.0.1
+        version: 0.0.1
+      '@emquad/typst-binding-linux-x64-musl':
+        specifier: 0.0.1
+        version: 0.0.1
+      '@emquad/typst-binding-win32-arm64-msvc':
+        specifier: 0.0.1
+        version: 0.0.1
+      '@emquad/typst-binding-win32-x64-msvc':
+        specifier: 0.0.1
+        version: 0.0.1
 
   packages/core:
     dependencies:
@@ -259,6 +284,58 @@ packages:
 
   '@emnapi/wasi-threads@1.2.2':
     resolution: {integrity: sha512-c95qOXkHdydNKhscBTebqEC1CVAZpyqOfVfBzQ1qgzyl3gfeldUjIggDbIZgDKsHLgnsM+igH7TJ/eAasaVuMA==}
+
+  '@emquad/typst-binding-darwin-arm64@0.0.1':
+    resolution: {integrity: sha512-sEUOLd7Sum7bWQXDt/4ey30JC6vWxaExeGStFxV/f31FDVH3CPwJ4UtLHEoio61f8+J5BddqkOLcncJ7Lrv6SA==}
+    engines: {node: '>=22'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@emquad/typst-binding-darwin-x64@0.0.1':
+    resolution: {integrity: sha512-WiR7ihzlH9UQKnDN5yu83dTxTM0ISgpj+Pco+qEAR0d9j3V3z0P2+yEfWL5tB3MgGVGsc5rC+jMJ2SE4g/D5aA==}
+    engines: {node: '>=22'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@emquad/typst-binding-linux-arm64-gnu@0.0.1':
+    resolution: {integrity: sha512-+P1aRyDMQCjghywnohBx+i8Mbe+FvHJNqH7fwu/ohBdI45W4JBBjM/Kxdq6ERHIzcfUoqdKG/HVdsAGN/RK57w==}
+    engines: {node: '>=22'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@emquad/typst-binding-linux-arm64-musl@0.0.1':
+    resolution: {integrity: sha512-43sP/nGtZROIvcOpIpNLsRd/V5ROwetLLHFwWCs8w2jSu9sQHMKbrWARFklNWtNRBmeovNw9hWMsBEGEF4Z9Eg==}
+    engines: {node: '>=22'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  '@emquad/typst-binding-linux-x64-gnu@0.0.1':
+    resolution: {integrity: sha512-53MsaDuz62Dk9oNyEE8NFYHUmJOXgFGmg2OXxw9vRPxkO7RV3gOiO0NjZXXEtNvQKNaiosx9sukg+S6uqui5Jw==}
+    engines: {node: '>=22'}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@emquad/typst-binding-linux-x64-musl@0.0.1':
+    resolution: {integrity: sha512-GOmvD9tbscFW1u2YFP+4EiLwilVSow1IF68KLWZ2N/XY+/cQMlvgh/qGgEn92vWc8XQ4GGQ6X9otbdc4mEGfvg==}
+    engines: {node: '>=22'}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@emquad/typst-binding-win32-arm64-msvc@0.0.1':
+    resolution: {integrity: sha512-k84OmgElHBMlQQACW3lHmYHEcI+4LoO7Ij3YAQj8e5zyc3E16v1qHN64NDYqYk/czYeSWSbcSXQbEqxtu91F0g==}
+    engines: {node: '>=22'}
+    cpu: [arm64]
+    os: [win32]
+
+  '@emquad/typst-binding-win32-x64-msvc@0.0.1':
+    resolution: {integrity: sha512-fkPL+6rtd7yff3CsFUG/jIwxmXNnHWRF60ReDJKQI9rsRPVSvjnAD45c/DpFRa0FArMNZOXgKcaHiPhSuU6gYA==}
+    engines: {node: '>=22'}
+    cpu: [x64]
+    os: [win32]
 
   '@inquirer/ansi@2.0.7':
     resolution: {integrity: sha512-3eTuUO1vH2cZm2ZKHeQxnOqlTi9EfZDGgIe3BL3I4u+rJHocr9Fz86M4fjYABPvFnQG/gGK551HqDiIcETwU6Q==}
@@ -2528,6 +2605,30 @@ snapshots:
   '@emnapi/wasi-threads@1.2.2':
     dependencies:
       tslib: 2.8.1
+    optional: true
+
+  '@emquad/typst-binding-darwin-arm64@0.0.1':
+    optional: true
+
+  '@emquad/typst-binding-darwin-x64@0.0.1':
+    optional: true
+
+  '@emquad/typst-binding-linux-arm64-gnu@0.0.1':
+    optional: true
+
+  '@emquad/typst-binding-linux-arm64-musl@0.0.1':
+    optional: true
+
+  '@emquad/typst-binding-linux-x64-gnu@0.0.1':
+    optional: true
+
+  '@emquad/typst-binding-linux-x64-musl@0.0.1':
+    optional: true
+
+  '@emquad/typst-binding-win32-arm64-msvc@0.0.1':
+    optional: true
+
+  '@emquad/typst-binding-win32-x64-msvc@0.0.1':
     optional: true
 
   '@inquirer/ansi@2.0.7': {}

@@ -16,7 +16,7 @@
     "prepare": "lefthook install",
     "notices": "cargo deny check licenses && cargo about generate --output-file THIRD-PARTY-NOTICES.md about.hbs",
     "changeset": "changeset",
-    "changeset:version": "changeset version && pnpm --filter @emquad/typst-binding exec napi version && node scripts/sync-binding-optional-deps.mjs && pnpm install --no-frozen-lockfile",
+    "changeset:version": "changeset version && pnpm --filter @emquad/typst-binding exec napi version && pnpm install --no-frozen-lockfile",
     "changeset:status": "changeset status --since=origin/main"
   },
   "devDependencies": {
