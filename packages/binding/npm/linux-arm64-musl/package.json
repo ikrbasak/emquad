@@ -1,6 +1,6 @@
 {
   "name": "@emquad/typst-binding-linux-arm64-musl",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license": "MIT",
   "files": [
     "emquad.linux-arm64-musl.node"

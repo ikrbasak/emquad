@@ -115,6 +115,53 @@ need.
 
 The deleted files remain reachable in git history at `44c4eea` and earlier.
 
+## Releasing after the bootstrap
+
+Cutting `0.0.2` exposed two things the `0.0.1` bootstrap had hidden, because
+`scripts/initial-publish.sh` did them by hand and no ongoing path ever had to.
+
+**`napi version` does not update the loader's `optionalDependencies`.** It bumps
+every `packages/binding/npm/*/package.json` to match the parent and stops. So
+`pnpm changeset:version` produced platform packages at `0.0.2` and a loader still
+pinned to `0.0.1`. Publishing that ships a new loader that resolves the
+*previous* release's binaries — it installs, loads, and compiles, with stale
+native code, drifting one release further every time. Nothing downstream would
+notice.
+
+Fixed by `scripts/sync-binding-optional-deps.mjs`, chained into
+`changeset:version` and enforced as a release preflight with `--check`. It pins
+exact versions, not ranges: the loader and its binary come from one source tree
+in one CI run, and a caret would let npm pair a loader with a binary it was never
+tested against.
+
+**The version bump empties the lockfile of platform packages.** Immediately after
+the bump, `pnpm install --frozen-lockfile` fails —
+
+```
+@emquad/typst-binding-win32-x64-msvc (lockfile: 0.0.1, manifest: 0.0.2)
+```
+
+— and refreshing the lockfile does not fix it so much as paper over it: pnpm
+**silently drops** all eight entries, because nothing in the registry serves
+`0.0.2` yet. The lockfile goes from recording them at `0.0.1` to recording
+nothing, and `--frozen-lockfile` then passes because the manifest and lockfile
+agree they are unresolvable.
+
+That is survivable and is what the committed state looks like between a version
+bump and its publish. It is worth knowing two things about it:
+
+- **CI after a version bump never installs a real platform package.** It falls
+  back to the `.node` built beside the loader, which is the development path. Do
+  not read a green CI run there as evidence the published artifact resolves.
+- **The entries come back on the next `pnpm install` after the release**, once
+  the registry serves the new version. Expect the lockfile to churn in both
+  directions around every release.
+
+The ordering constraint underneath is the same one that forced a laptop script
+for `0.0.1`: **the platform packages must exist in the registry before anything
+can depend on them.** `release.yml` satisfies it by publishing them with
+`napi pre-publish` before `changeset publish` runs.
+
 ## Verified from the registry
 
 A clean `npm install @emquad/core @emquad/fonts` into an empty project, with no

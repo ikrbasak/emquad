@@ -112,6 +112,15 @@ jobs:
 
           exit $fail
 
+      # The check above counts optionalDependencies; this one checks their
+      # *versions*. `napi version` bumps the platform packages and leaves the
+      # loader's optionalDependencies alone, so without this a release publishes
+      # a new loader pinned to the previous release's binaries. It installs,
+      # loads, and compiles — with stale native code, drifting further every
+      # version. Nothing downstream would notice.
+      - name: The binding points at the platform packages it ships with
+        run: node scripts/sync-binding-optional-deps.mjs --check
+
   build:
     name: Build
     needs: preflight
