@@ -63,6 +63,28 @@ function pnpm(args, options) {
     : execFileSync("pnpm", args, options);
 }
 
+/**
+ * The one `.node` in `dir` that this host can load, by filename.
+ *
+ * Loading is the test: a `.node` for another architecture throws from
+ * `process.dlopen`, so the survivor is the host's. This avoids recomputing
+ * napi's triple — including its musl detection — while still working when
+ * every platform's binary is sitting in the directory at once, which is what
+ * the release workflow produces.
+ */
+function hostBinary(dir) {
+  const candidates = readdirSync(dir).filter((f) => f.endsWith(".node"));
+  if (candidates.length === 1) return candidates[0];
+  return candidates.find((file) => {
+    try {
+      process.dlopen({ exports: {} }, join(dir, file));
+      return true;
+    } catch {
+      return false;
+    }
+  });
+}
+
 async function consumer() {
   const root = await mkdtemp(join(tmpdir(), "emquad-consumer-"));
   temps.push(root);
@@ -105,8 +127,19 @@ async function consumer() {
   // `process.platform`/`arch`: reimplementing napi's triple would mean
   // reimplementing its musl detection, and getting that subtly wrong would make
   // the test pass against a name no real install uses.
-  const built = readdirSync(join(PACKAGES, "binding")).find((f) => f.endsWith(".node"));
-  assert.ok(built, "no built .node in packages/binding — run the binding build first");
+  //
+  // **There may be more than one.** Locally the build leaves exactly one, but
+  // `release.yml`'s verify job downloads all eight platform artifacts into this
+  // directory with `merge-multiple: true`. Taking the first one there picks an
+  // arbitrary architecture — the release dry run assembled a platform package
+  // around a binary this host cannot load, and failed with "Cannot find native
+  // binding", which reads like a packaging bug rather than a test bug.
+  //
+  // So: whichever of them this host can actually `dlopen`. That is the same
+  // question the loader asks at require time, answered the same way, without
+  // reimplementing the triple.
+  const built = hostBinary(join(PACKAGES, "binding"));
+  assert.ok(built, "no loadable .node in packages/binding — run the binding build first");
   const triple = built.slice("emquad.".length, -".node".length);
 
   const platform = join(modules, `typst-binding-${triple}`);
