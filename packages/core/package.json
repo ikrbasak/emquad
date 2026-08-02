@@ -4,7 +4,6 @@
   "description": "Typst PDF generation for Node. VFS in, PDF out.",
   "keywords": [
     "document-generation",
-    "html-to-pdf",
     "invoice",
     "napi-rs",
     "pdf",

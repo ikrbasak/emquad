@@ -59,7 +59,16 @@ Priority order, most valuable first:
 
 ## Deliverables
 
-- Reproducible Puppeteer comparison with published harness
-- Documentation covering the priority list above
-- Examples repo
-- Launch-ready READMEs with limitations stated up front
+- ~~Reproducible Puppeteer comparison with published harness~~ **Done** —
+  [`../../benchmarks/puppeteer/`](../../benchmarks/puppeteer/README.md), results in
+  [`../phase-5/01-puppeteer.md`](../phase-5/01-puppeteer.md). The answer is a range, 2×–33×, not
+  a number: the document decides.
+- ~~Documentation covering the priority list above~~ **Done**, in
+  [`../../packages/core/README.md`](../../packages/core/README.md) — which is what npm renders,
+  rather than a wiki nobody opens.
+- ~~Examples repo~~ **Done as [`../../examples/`](../../examples/README.md)**, in this repository
+  rather than a separate one. Workspace members, so they import `@emquad/core` by name.
+- ~~Launch-ready READMEs with limitations stated up front~~ **Done.**
+
+Also delivered, and not on this list: [`../phase-5/00-throughput.md`](../phase-5/00-throughput.md)
+resolves the throughput discrepancy §5.2 depended on, and **retracts the 532 µs figure**.

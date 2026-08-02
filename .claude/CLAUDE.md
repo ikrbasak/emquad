@@ -4,7 +4,7 @@ A lean Node.js binding for [Typst](https://github.com/typst/typst) for PDF gener
 **VFS in → PDF out.** Positioned as a fast, light replacement for Chromium + Puppeteer PDF
 pipelines.
 
-**Status: Phases 0–4 complete. `0.0.1` is on npm.**
+**Status: Phases 0–5 complete. `0.0.1` is on npm; `0.0.2` is staged but unreleased.**
 `emquad-engine` compiles a VFS to a PDF, `emquad-napi` exposes it to Node, and `@emquad/core`,
 `@emquad/resolver`, and `@emquad/fonts` are the published surface, over eight prebuilt
 `@emquad/typst-binding-<platform>` packages. 64 Rust tests and 115 Node tests pass, and CI is
@@ -27,9 +27,10 @@ See [`phase-4/00-publishing.md`](phase-4/00-publishing.md).
   Phase 4.**
 - [`phase-4/00-publishing.md`](phase-4/00-publishing.md) — the first publish, and the six
   defects it cost. Read before touching `release.yml` or `scripts/initial-publish.sh`.
-- [`phase-5/00-throughput.md`](phase-5/00-throughput.md) — the throughput discrepancy, resolved.
-  **It retracts the 532 µs figure outright** and supersedes
-  [`discovery/07-benchmarks.md`](discovery/07-benchmarks.md)'s absolute numbers.
+- [`phase-5/`](phase-5/00-overview.md) — benchmarks, docs, launch.
+  [`00-throughput.md`](phase-5/00-throughput.md) **retracts the 532 µs figure outright** and
+  supersedes [`discovery/07-benchmarks.md`](discovery/07-benchmarks.md)'s absolute numbers;
+  [`01-puppeteer.md`](phase-5/01-puppeteer.md) is the Puppeteer comparison.
 
 **Read these before writing any code:**
 
