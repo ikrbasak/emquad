@@ -76,10 +76,44 @@ rather than asserting the commands work.
 which credential it used. That warning is the only signal that a package has not
 been switched over — there is no other inventory.
 
-**`packaging.test.js` still links the workspace copy by symlink.** The platform
-packages now exist, so it can become a true clean-room install from the registry
-— which is the only thing that would prove the published artifact works, as
-opposed to the working tree working.
+**~~`packaging.test.js` still links the workspace copy by symlink.~~** Fixed. It
+now `pnpm pack`s the binding and assembles a real `@emquad/typst-binding-<triple>`
+package around the built `.node`, so the loader takes the same branch a published
+install takes. The symlink was worse than merely approximate: it exercised the
+loader's *dev fallback*, which is the one branch a published install never
+reaches — so the test was green on a path no user has. Only `@emquad/fonts` is
+still symlinked, and deliberately: it is scenery, not the thing under test.
+
+What is still not covered is `os`/`cpu`/`libc` selection *among* the eight. The
+test is offline and assembles the one package matching the host, so gating
+remains proven on `darwin-arm64` alone.
+
+## Deleting `spike/`
+
+Phase 0's throwaway probes are gone. `spike/README.md` carried a table pinning
+each probe to the phase that could delete it, and every row's condition is now
+met — `soak.rs` → `benches/soak.rs`, `tagged.rs` → `untagged_output_is_smaller`,
+`svgtext.rs` → hard rule 8 plus the rule 12 goldens, `interner.rs` →
+`__panicInPool`, `runaway.rs` → the runaway-kill test in `process-pool.test.js`,
+`pool.rs` + `procsweep.sh` → `bench/poolcmp.sh`.
+
+The last row, `xtarget/`, was the one worth checking rather than assuming. Two
+handoffs describe `sweep2.sh` as "the working environment for the other eleven"
+targets, which reads like the only copy of something load-bearing. It is not:
+[`../discovery/08-phase-0-results.md`](../discovery/08-phase-0-results.md#q5--psmstacker-across-the-target-matrix)
+already records the recipe as a table — `CC=clang -target <triple>`, plus
+`AR=ar` for the two Android triples — with the reasoning for why plain clang
+suffices when `psm` only needs to *assemble*. The script produced that table; it
+was never the record of it.
+
+In the event the matrix needed less than either document implies. Of the eight
+shipping targets only `aarch64-unknown-linux-musl` sets `CC_*`/`CXX_*` by hand,
+and `aarch64-unknown-linux-gnu` gets the equivalent from `--use-napi-cross`. The
+six triples the sweep covered that we do not ship — freebsd, two android, wasm32,
+`win32-ia32`, `linux-arm-gnueabihf` — are why the script looked bigger than the
+need.
+
+The deleted files remain reachable in git history at `44c4eea` and earlier.
 
 ## Verified from the registry
 

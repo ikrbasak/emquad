@@ -4,7 +4,6 @@ export default defineConfig({
   ignorePatterns: [
     "target/**",
     "dist/**",
-    "spike/**",
     "pnpm-lock.yaml",
     // Generated: by cargo-about, and by napi-rs respectively.
     "THIRD-PARTY-NOTICES.md",

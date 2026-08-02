@@ -81,7 +81,9 @@ Details and the candidate causes are in
 [`03-findings.md`](03-findings.md#throughput-an-unresolved-discrepancy).
 
 **No throughput number should be published until this is resolved.** The decisive experiment is
-to rebuild `spike/phase0` and run it back to back against this engine on one machine.
+to rebuild `spike/phase0` and run it back to back against this engine on one machine. `spike/`
+was deleted in Phase 4 — recover it from git history at `44c4eea` if this experiment is ever
+run, since the point is to compare against the *original* harness.
 
 ## Benchmarking, before you measure anything
 
@@ -117,19 +119,25 @@ What Phase 2 must add:
   surfaces as a catchable JS error rather than killing the process. Phase 1 could not test this
   end to end — the interner guard fires *before* typst's panic, by design, so the panic path is
   never reached through the public API. `spike/phase0/src/bin/interner.rs` is the probe that
-  does reach it.
+  does reach it. **Done in Phase 2** — `__panicInPool` on the napi binding triggers a real
+  panic on a pool thread, and `packages/binding/test/binding.test.js` asserts it surfaces as a
+  catchable JS error.
 - **Backpressure** under a saturated queue.
 - **The soak test as a nightly**, asserting RSS plateaus with eviction on.
 
-## The `spike/` directory
+## ~~The `spike/` directory~~ — deleted in Phase 4
 
-Phase 0's throwaway probes, kept because several are still the only copy of real work.
-[`../../spike/README.md`](../../spike/README.md) has a table of what survives, why, and which
-phase deletes it.
+Phase 0's throwaway probes, kept because several were then the only copy of real work. The
+plan below was right about *what* had to be promoted and wrong about *when*: `runaway.rs` and
+the process half of `pool.rs`/`procsweep.sh` both needed the worker-process pool, which did not
+exist until Phase 3, so only `interner.rs` was consumed in Phase 2.
 
-Phase 2 consumes and then deletes `runaway.rs` (runaway compiles, pool wedging, kill cost),
-`pool.rs` + `procsweep.sh` (thread-vs-process scaling — the evidence behind the process pool),
-and `interner.rs` (the only probe reaching typst's real 65,535 cap).
+Every probe now has a permanent home, and
+[`../phase-4/00-publishing.md`](../phase-4/00-publishing.md#deleting-spike) has the mapping.
+
+> Phase 2 consumes and then deletes `runaway.rs` (runaway compiles, pool wedging, kill cost),
+> `pool.rs` + `procsweep.sh` (thread-vs-process scaling — the evidence behind the process
+> pool), and `interner.rs` (the only probe reaching typst's real 65,535 cap).
 
 ## Things not to change without a reason
 
@@ -147,4 +155,6 @@ For when Phase 4 arrives: all 14 targets were verified in Phase 0, but **the thr
 `win32-*-msvc` targets cannot be cross-compiled** — `stacker` compiles `windows.c`, which needs
 `windows.h`, and `psm` needs `lib.exe`. They need native Windows runners. Eleven targets
 cross-compile with `CC=clang` plus `CFLAGS=-target <triple>`; Android needs `AR=ar` as well.
-`spike/xtarget/sweep2.sh` is the recipe.
+~~`spike/xtarget/sweep2.sh` is the recipe.~~ That script is gone; the recipe is the sentence
+above, and the per-target table in
+[`../discovery/08-phase-0-results.md`](../discovery/08-phase-0-results.md#q5--psmstacker-across-the-target-matrix).

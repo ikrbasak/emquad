@@ -80,5 +80,8 @@ worker-process pool is now a deliverable rather than a maybe.
 - Structured error type with source locations
 - Zero-copy buffer output
 - Concurrency tests: parallel compiles produce byte-identical output to serial ones
-- Promote `spike/phase0/src/bin/{runaway,pool,interner}.rs` and `procsweep.sh` into this
-  phase's tests, then delete them — see [`../../spike/README.md`](../../spike/README.md)
+- ~~Promote `spike/phase0/src/bin/{runaway,pool,interner}.rs` and `procsweep.sh` into this
+  phase's tests, then delete them.~~ **Done**, though not all in Phase 2: `interner.rs` became
+  `__panicInPool` here, while `runaway.rs` and the process half of `pool.rs`/`procsweep.sh`
+  needed the worker-process pool and so landed in Phase 3. `spike/` was deleted in Phase 4 —
+  see [`../phase-4/00-publishing.md`](../phase-4/00-publishing.md#deleting-spike).

@@ -90,5 +90,8 @@ Typst is pre-1.0 and breaks on minor releases (see
 - Byte-identity test on the fonts shipped by `@emquad/fonts`; subsetting them would
   relicense that package as GPL-3 (hard rule 11)
 - Documented typst-version compatibility policy
-- Fold `spike/xtarget/sweep2.sh`'s `CC`/`CFLAGS`/`AR` environment into the matrix, then
-  delete `spike/` — see [`../../spike/README.md`](../../spike/README.md)
+- ~~Fold `spike/xtarget/sweep2.sh`'s `CC`/`CFLAGS`/`AR` environment into the matrix, then
+  delete `spike/`.~~ **Done.** The matrix needed less of it than expected — eight shipping
+  targets, of which only `aarch64-unknown-linux-musl` needs the explicit `CC_*`/`CXX_*` pair,
+  and `aarch64-unknown-linux-gnu` gets the equivalent from `--use-napi-cross`. See
+  [`../phase-4/00-publishing.md`](../phase-4/00-publishing.md#deleting-spike).

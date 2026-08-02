@@ -175,6 +175,9 @@ resolution on typst's hot `source()` path.
 as an optimistic bound requiring re-measurement against production templates; this discrepancy
 is a second, independent reason to treat both figures as provisional. The decisive experiment
 is to rebuild `spike/phase0` and run it against this engine on the same machine, back to back.
+`spike/` was deleted in Phase 4, so recover it from git history at `44c4eea` — the experiment
+only means something against the *original* harness, so do not substitute
+`crates/emquad-engine/benches/`.
 
 ---
 

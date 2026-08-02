@@ -32,7 +32,6 @@ const { pdf, warnings } = await compiler
 | `packages/fonts/` | `@emquad/fonts` — 17 default faces, four licenses. **Done** |
 | `packages/binding/` | The built addon and its generated bindings. Internal, not published |
 | `scripts/` | Dependency guard and benchmark comparison harness |
-| `spike/` | Phase 0 throwaway probes, kept for the parts not yet promoted |
 | `.claude/` | Plan, research, and phase documentation |
 
 ## Getting oriented

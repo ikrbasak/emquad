@@ -74,8 +74,10 @@ All 14 targets were verified in Phase 0. `packages/binding/package.json` already
 `napi.targets`.
 
 **The three `win32-*-msvc` targets cannot be cross-compiled** — `stacker` compiles `windows.c` and
-`psm` needs `lib.exe`. Native runners are required. `spike/xtarget/sweep2.sh` has the working
-environment for the other eleven.
+`psm` needs `lib.exe`. Native runners are required. ~~`spike/xtarget/sweep2.sh` has the working
+environment for the other eleven.~~ That script was deleted in Phase 4; the environment is the
+Q5 table in
+[`../discovery/08-phase-0-results.md`](../discovery/08-phase-0-results.md#q5--psmstacker-across-the-target-matrix).
 
 ### 3. Packaging tests on the real matrix
 
@@ -144,8 +146,9 @@ zero warnings. Pinned by tests. If Phase 4 writes user-facing docs, this belongs
 3. **What the process-global contention actually is.** rayon is ruled out; `comemo` is the
    suspect; nobody has confirmed it.
 
-## Deferred cleanup
+## ~~Deferred cleanup~~ — done in Phase 4
 
-`spike/` is still present, with a TODO table in `spike/README.md` listing what each probe was for
-and when it can go. Phase 4 or 5 should delete it — its findings are all in
-[`../discovery/`](../discovery/00-overview.md).
+`spike/` is gone. Every row of its TODO table had its condition met by then; the mapping from
+probe to permanent home is in
+[`../phase-4/00-publishing.md`](../phase-4/00-publishing.md#deleting-spike), and the findings
+are all in [`../discovery/`](../discovery/00-overview.md) as this said.

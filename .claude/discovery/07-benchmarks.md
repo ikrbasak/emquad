@@ -127,6 +127,7 @@ The first three items below were open questions here and are now answered in
 
 ## Reproducing
 
-The probe source is preserved at [`../../spike/phase0/`](../../spike/phase0/). It should be
-promoted into `crates/emquad-engine/benches/` during Phase 1 so these numbers stay honest as the
-code evolves.
+~~The probe source is preserved at `spike/phase0/`.~~ It was promoted into
+`crates/emquad-engine/benches/` — `compile.rs` and `soak.rs` — and `spike/` was deleted in
+Phase 4. Re-measure there; the deleted probes are in git history at `44c4eea` and earlier if
+the original harness is ever needed for a back-to-back comparison.

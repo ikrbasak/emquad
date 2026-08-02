@@ -133,7 +133,11 @@ Phase 3 must add:
 
 - All 14 targets verified in Phase 0, but the three `win32-*-msvc` targets **cannot be
   cross-compiled** — `stacker` compiles `windows.c` and `psm` needs `lib.exe`. Native runners
-  required. `spike/xtarget/sweep2.sh` has the working environment for the other eleven.
+  required. ~~`spike/xtarget/sweep2.sh` has the working environment for the other eleven.~~
+  That script was deleted in Phase 4; the environment is the Q5 table in
+  [`../discovery/08-phase-0-results.md`](../discovery/08-phase-0-results.md#q5--psmstacker-across-the-target-matrix).
+  In practice the eight shipping targets needed almost none of it — see
+  [`../phase-4/00-publishing.md`](../phase-4/00-publishing.md#deleting-spike).
 - `napi build --platform --esm` is wired up in `packages/binding/package.json`, with the target
   list already in its `napi.targets`.
 - Node floor is **22**, and the binding is built against Node-API 9.

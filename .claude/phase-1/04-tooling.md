@@ -70,8 +70,9 @@ as warnings, plus `no-console`, `eqeqeq`, `consistent-type-imports`, `no-explici
 
 **oxfmt** (`.oxfmtrc.json`) — defaults, with markdown and YAML excluded. That exclusion is
 deliberate: the documents under `.claude/` are hand-wrapped prose with hand-aligned tables, and
-reformatting them would produce churn that buries real changes. `spike/`, `target/`, `dist/`,
-and the generated `THIRD-PARTY-NOTICES.md` are excluded too.
+reformatting them would produce churn that buries real changes. `target/`, `dist/`, and the
+generated `THIRD-PARTY-NOTICES.md` are excluded too. (`spike/` was on that list until Phase 4
+deleted the directory.)
 
 **commitlint** (`commitlint.config.js`) — Conventional Commits with a **closed scope list**:
 `engine`, `napi`, `core`, `fonts`, `resolver`, `ci`, `deps`, `docs`, `repo`. A closed list means

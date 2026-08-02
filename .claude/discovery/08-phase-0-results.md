@@ -341,9 +341,12 @@ This closes the last open item in the size-levers table: every lever is now eith
 ## Deliverables
 
 - **Findings:** this document.
-- **Harness:** preserved at [`../../spike/`](../../spike/) — see its README. It is throwaway
-  code and not part of the build; Phase 1 should promote the useful probes into
-  `crates/emquad-engine/benches/` so these numbers stay honest as the code evolves.
+- **Harness:** ~~preserved at `spike/`.~~ Deleted in Phase 4, once every probe had a
+  permanent home — see
+  [`../phase-4/00-publishing.md`](../phase-4/00-publishing.md#deleting-spike) for the mapping.
+  The measurement probes became `crates/emquad-engine/benches/`; git history at `44c4eea` has
+  the originals. **The Q5 table above is now the record of the cross-compile environment** —
+  it was `xtarget/sweep2.sh` that produced it, not the other way round.
 - **Go/no-go:** recorded in [`../plan/00-overview.md`](../plan/00-overview.md#decisions--with-phase-0-gono-go).
 
 ### Still not measured
