@@ -27,6 +27,9 @@ See [`phase-4/00-publishing.md`](phase-4/00-publishing.md).
   Phase 4.**
 - [`phase-4/00-publishing.md`](phase-4/00-publishing.md) — the first publish, and the six
   defects it cost. Read before touching `release.yml` or `scripts/initial-publish.sh`.
+- [`phase-5/00-throughput.md`](phase-5/00-throughput.md) — the throughput discrepancy, resolved.
+  **It retracts the 532 µs figure outright** and supersedes
+  [`discovery/07-benchmarks.md`](discovery/07-benchmarks.md)'s absolute numbers.
 
 **Read these before writing any code:**
 
@@ -193,8 +196,8 @@ Measured on Apple M1 (4 performance + 4 efficiency cores), Typst 0.15.1. Full co
 
 | Metric | Value |
 |---|---|
-| Distinct documents (realistic) | 532 µs → ~1,881 docs/sec/core |
-| Cold first compile | 6.64 ms (one-time per process) |
+| Distinct documents (realistic) | **~705 µs → ~1,420 docs/sec/core** (engine, library defaults) |
+| Cold first compile | 3.3 ms warm OS cache, 10.3 ms first ever (one-time per process) |
 | Thread scaling, simple documents | 3.71× at 4 threads, flat after |
 | Thread scaling, many page runs | **0.46×** — collapses; processes reach 5.18× |
 | Process pool vs threads, many page runs (Phase 3) | **6.93× at 8**, 3.83× at 4 |
@@ -212,13 +215,31 @@ xz-compressed *archives* — do not compare them against an uncompressed `.node`
 Do not use `panic = "abort"` to shrink the binary: it disables `catch_unwind`, which hard
 rule 2 depends on.
 
-The 532 µs figure is an **optimistic bound** — re-measure with production templates before
-publishing. Never quote the memoized 327 µs number; it recompiles an identical document.
+The ~705 µs figure is an **optimistic bound** — one synthetic invoice varying only a substituted
+integer, on one machine. Re-measure with production templates before leaning on it. Never quote
+the memoized ~332 µs number; it recompiles an identical document.
+
+**The old 532 µs / 1,881 docs-per-sec figure is retracted.** The original Phase 0 binary,
+rebuilt from its original source, measures 616 µs on the same hardware today. Absolute numbers
+from different sessions were never comparable.
 
 **`pool.mode` is a document-shape decision, not a performance dial.** A page *run* comes from
 page re-configuration, not page count, so an ordinary document — even a 200-page report — has
 exactly one and belongs on threads. Documents that repeatedly `#set page(...)` belong on
 processes, as does anything compiling untrusted templates.
 
-**No throughput number is publishable yet.** The Phase 1 / Phase 0 discrepancy (652 µs vs
-532 µs) is still unexplained; Phase 3's figures lean toward 652 µs being right.
+**A single-core throughput number is now publishable**, with its caveats attached — see
+[`phase-5/00-throughput.md`](phase-5/00-throughput.md). The Phase 1 / Phase 0 discrepancy is
+resolved as far as it needs to be: most of it was measurement error, not a real gap.
+
+- The engine benchmark defaulted to **pinned rayon, which the library does not do** — worth
+  ~5–7%, and now fixed to match `CompilerBuilder`'s default.
+- **532 µs does not reproduce.** The original probe gives 616 µs today on the same machine.
+- **Per-compile wrapper overhead is ~0%**, measured: with both harnesses given the same shape in
+  one session, the memoized rows match within 0.4% (315.3 vs 316.5 µs). This **refutes** the
+  standing suspect list — `catch_unwind`, interning, and settings conversion together cost
+  about 1 µs.
+
+~15.6% remains, inside compile work rather than around it, and is undiagnosed. It is an
+optimization opportunity, not a defect. **The Puppeteer comparison is still unmeasured**, and
+that is the number that actually drives adoption.

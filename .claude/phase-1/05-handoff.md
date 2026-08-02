@@ -76,6 +76,7 @@ is `Compiler::builder().pin_rayon(bool)`.
 ### 2. Why is throughput 23% below Phase 0's figure?
 
 `cargo bench --bench compile` reports 652 µs against Phase 0's 532 µs, and it is unexplained.
+**Resolved in Phase 5** — see [`../phase-5/00-throughput.md`](../phase-5/00-throughput.md).
 Notably the *memoized* row is faster than Phase 0's, which argues against wrapper overhead.
 Details and the candidate causes are in
 [`03-findings.md`](03-findings.md#throughput-an-unresolved-discrepancy).

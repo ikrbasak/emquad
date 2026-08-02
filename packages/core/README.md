@@ -73,6 +73,25 @@ try {
 place a silently-wrong document announces itself — an unmatched font family yields a perfectly
 valid PDF set in something else.
 
+## Two ways a PDF comes out wrong without failing
+
+PDF generation fails silently more often than it crashes, and both of these produce a valid PDF,
+the right page count, a successful compile, and nothing thrown.
+
+**An empty font set drops every text run.** Typst compiles it happily and emits a blank page with
+zero diagnostics, so `Compiler` rejects `fonts: []` at construction rather than letting it reach
+you as an empty document. You cannot turn this check off.
+
+**SVG text in an unregistered family can vanish entirely.** Typst emits *no diagnostic at all*
+for an SVG whose `font-family` is not registered — not an error, not a warning. With a serif
+family present the text is substituted; with only a monospace family registered the text renders
+as nothing whatsoever. Ordinary `#set text(font: …)` does warn, but SVG is not on that code path,
+so no check can catch it. **Register a serif family** if any of your input is SVG, which includes
+every pre-rendered chart.
+
+Neither is theoretical — both were found by rasterizing output and comparing images, after tests
+that asserted "no error thrown" passed.
+
 ## Choosing a pool
 
 ```ts
@@ -107,6 +126,93 @@ await compiler
 Without a pinned clock the same document produces different bytes on every run.
 `offsetMinutes` is minutes **east** of UTC — JavaScript's `getTimezoneOffset()` returns the
 opposite sign.
+
+## Fonts: register up front, select per document
+
+Registration is expensive; selection is free.
+
+```ts
+const compiler = new Compiler({ fonts: [...defaultFonts, corporateSans] });
+
+// Per document, costs nothing:
+.source('#set text(font: "Corporate Sans")\n= Hello')
+```
+
+Adding a font mutates the font book, which changes its hash and **invalidates the memo cache** —
+every document compiled afterwards starts cold. Registering at runtime is supported, but treat it
+as a tenant-onboarding operation rather than a per-request one. Registering per request costs
+roughly an order of magnitude and is the single most common way to make this library slow.
+
+`@emquad/fonts` is 9.3 MB for 17 faces. `fontsExcept()` drops whole families if that matters;
+do not subset the files themselves, which would relicense them.
+
+## Charts
+
+Typst has drawing primitives but no charting. Two routes:
+
+**Pre-render to SVG in Node** (recommended for reports and invoices). Generate the chart with any
+JS charting library, put the SVG in the VFS, and `image()` it. No registry dependency, and it
+reuses tooling your team already has. Mind the SVG-text caveat above — register a serif family.
+
+**`@preview` packages** (`cetz`, `cetz-plot`, `lilaq`) via
+[`@emquad/resolver`](https://www.npmjs.com/package/@emquad/resolver). Better for dense,
+document-native scientific plotting. Once cached and mounted into the base VFS layer they cost
+nothing per compile.
+
+## Concurrency
+
+`compile()` runs on a dedicated Rust thread pool, **not** libuv's. That is deliberate:
+`UV_THREADPOOL_SIZE` defaults to 4 and is shared with `fs`, DNS, and `crypto`, so building on it
+would silently cap a server at four concurrent renders *and* stall unrelated file reads, with no
+symptom pointing here.
+
+`compileSync()` exists for CLIs, build scripts, and batch jobs, where blocking the main thread is
+free and pool setup is not. It is refused in process mode, where it cannot preserve isolation.
+
+Size the pool to cores, not to request concurrency — the queue absorbs bursts and **refuses**
+rather than blocking when full, so overload surfaces as a `QUEUE_FULL` error you can shed load
+on instead of as unbounded latency. Past 4 threads, gains on ordinary documents are small.
+
+## Limitations
+
+Stated up front, because finding these in production is worse than declining to adopt.
+
+- **No compile timeout in thread mode.** Typst has no cancellation hook and a Rust thread cannot
+  be killed, so a timeout there could only leak a wedged thread while looking like protection.
+  `pool.timeoutMs` exists only for `mode: "process"`, where killing actually works.
+- **Untrusted templates require `mode: "process"`.** A malicious or merely runaway template can
+  loop or allocate without bound. Process isolation is the only real containment.
+- **This is not an HTML renderer.** Migrating from Chromium means rewriting templates in Typst
+  markup. There is no HTML input path, and that cost is real — see below.
+- **Typst is pre-1.0**, so output can change between versions. See below.
+- **~30 MB installed**, one prebuilt binary per platform. No compiler needed, but it is not small.
+- **Eight platforms**, verified end to end on `darwin-arm64` so far.
+
+## Typst versions
+
+This release compiles with **Typst 0.15.1**, pinned exactly and statically linked — the compiler
+is inside the binary, so there is no way to pair a given emquad with a different typst.
+
+```ts
+import { typstVersion } from "@emquad/core";
+
+typstVersion(); // "0.15.1"
+```
+
+Record it alongside any golden file or visual baseline you keep: typst's output changes between
+releases, so it is the first thing to check when a document renders differently. **A typst minor
+bump is a minor bump of this package**, noted in the changelog and never automatic.
+
+## Migrating from Puppeteer
+
+Realistically: the pipeline gets simpler and faster, and the templates get rewritten.
+
+What carries over — your data layer, and charts if you pre-render them to SVG. What does not —
+HTML and CSS. Typst markup is a different language, and a nontrivial invoice template is a
+day's work, not an afternoon's. Budget for that rather than for a drop-in swap.
+
+What you stop maintaining: a Chromium install in your image, browser-crash recovery, and
+`page.setContent` timing races.
 
 ## Related
 

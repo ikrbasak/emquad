@@ -138,7 +138,10 @@ zero warnings. Pinned by tests. If Phase 4 writes user-facing docs, this belongs
 
 ## Still unresolved
 
-1. **The throughput discrepancy** — 652 µs (Phase 1) against 532 µs (Phase 0), unexplained.
+1. ~~**The throughput discrepancy** — 652 µs (Phase 1) against 532 µs (Phase 0), unexplained.~~
+   **Resolved in Phase 5**, mostly as measurement error: the benchmark defaulted to pinned
+   rayon (not the library default), and 532 µs does not reproduce. ~15.6% is real and remains
+   undiagnosed. See [`../phase-5/00-throughput.md`](../phase-5/00-throughput.md).
    Phase 3's figures lean toward the Phase 1 number being right. **Publish no throughput number
    until this is settled**, including in any launch material Phase 5 writes.
 2. **Why per-thread rayon pinning differs from `RAYON_NUM_THREADS=1`.** Lower stakes now that the

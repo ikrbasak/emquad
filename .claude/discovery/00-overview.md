@@ -30,7 +30,7 @@ The investigation validated the core idea, with real numbers:
 | Is embedding Typst realistic? | **Yes.** The `World` trait is only **7 methods**. |
 | Is the dependency tree cross-compile friendly? | **Yes**, except Windows — all 14 targets verified in Phase 0. |
 | How big is the native binary? | **29.4 MB** shipping / **12.8 MB gzipped**; ~13% smaller than `typst-cli`. |
-| Is it fast? | Yes — ~1,881 docs/sec/core. See [07-benchmarks.md](07-benchmarks.md). |
+| Is it fast? | Yes — ~1,420 docs/sec/core. See [`../phase-5/00-throughput.md`](../phase-5/00-throughput.md); [07-benchmarks.md](07-benchmarks.md)'s 1,881 is retracted. |
 
 The zero-`-sys`-crate property is the single most valuable structural fact we found. It is
 what makes a wide os/arch matrix affordable. **Protect it** — see

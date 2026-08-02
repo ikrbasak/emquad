@@ -4,7 +4,7 @@
 //! cargo bench --bench compile                 # invoice, 2000 documents
 //! EMQUAD_DOC=multirun cargo bench --bench compile
 //! EMQUAD_DOCS=10000 cargo bench --bench compile
-//! EMQUAD_PIN=0 cargo bench --bench compile    # leave typst's rayon alone
+//! EMQUAD_PIN=1 cargo bench --bench compile    # pin typst's rayon to 1 thread
 //! ```
 //!
 //! No criterion: the interesting quantity here is steady-state throughput over
@@ -45,7 +45,12 @@ use emquad_engine::{Compiler, PdfSettings};
 
 fn main() {
     let docs: usize = env("EMQUAD_DOCS", 2000);
-    let pinned = std::env::var("EMQUAD_PIN").as_deref() != Ok("0");
+    // Defaults to *unpinned*, because that is what `Compiler::builder()`
+    // defaults to. It used to default the other way, which meant the headline
+    // throughput number was measured in a configuration no user gets — worth
+    // ~7% here, and it was a good part of the "unexplained" gap against the
+    // Phase 0 probe, which never pinned. Opt in with `EMQUAD_PIN=1`.
+    let pinned = std::env::var("EMQUAD_PIN").as_deref() == Ok("1");
     let name = fixtures::doc_name();
     let compiler = if pinned { fixtures::compiler() } else { fixtures::compiler_unpinned() };
 

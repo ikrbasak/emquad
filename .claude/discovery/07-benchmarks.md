@@ -16,6 +16,12 @@ Deliberately representative of an invoice/report — the actual target workload.
 
 ## Results
 
+> **Superseded on 2026-08-02 — these absolute figures do not reproduce.** The binary that
+> produced them, rebuilt from this same source, measures **616 µs** on the same machine rather
+> than 532 µs. The numbers below are kept as the historical record; for anything quotable use
+> [`../phase-5/00-throughput.md`](../phase-5/00-throughput.md). The *relative* rows (memoized
+> against distinct, the `evict` cost) held up on re-measurement; only the absolute values moved.
+
 | Scenario | Per document | Throughput (1 core) |
 |---|---|---|
 | Cold first compile (empty memo cache) | **6.64 ms** | — |
@@ -25,7 +31,8 @@ Deliberately representative of an invoice/report — the actual target workload.
 
 ## Reading these honestly
 
-**Use the 532 µs / 1,881 per second figure.** The other rows are diagnostics.
+~~**Use the 532 µs / 1,881 per second figure.**~~ Retracted — see the note above. The guidance
+in this section about *which row* to quote is still exactly right; only the value changed.
 
 - **The 327 µs row is misleading and is included only to show that.** It recompiles a byte-identical
   document, so `comemo` serves almost everything from cache. No real server does this. Quoting it

@@ -153,7 +153,15 @@ Now recorded as **hard rule 11**. Full breakdown and the required packaging test
 
 ---
 
-## Throughput: an unresolved discrepancy
+## ~~Throughput: an unresolved discrepancy~~ — resolved in Phase 5
+
+> **Resolved on 2026-08-02**, and mostly not in this document's favor. The benchmark quoted
+> below was running with typst's rayon **pinned**, which `CompilerBuilder` does not default to,
+> costing ~5–7%. The 532 µs comparison figure does not reproduce at all — 616 µs today. And the
+> asymmetry argument below, which ruled *out* wrapper overhead, was reasoning across two
+> sessions; measured in one session the memoized rows are identical (315.3 vs 316.5 µs), which
+> confirms the conclusion while destroying the evidence for it. A real ~15.6% remains.
+> See [`../phase-5/00-throughput.md`](../phase-5/00-throughput.md).
 
 `cargo bench --bench compile` reports **652 µs / 1,533 docs/s** on the invoice.
 [`../discovery/07-benchmarks.md`](../discovery/07-benchmarks.md) records **532 µs / 1,881

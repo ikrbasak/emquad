@@ -120,7 +120,8 @@ Phase 3 must add:
 
 ## Two open questions carried forward
 
-1. **Throughput is 23% below Phase 0's figure** and unexplained — 652 µs against 532 µs on the
+1. ~~**Throughput is 23% below Phase 0's figure** and unexplained~~ — **resolved in Phase 5**;
+   the real gap is ~15.6% and the rest was measurement error. Originally: 652 µs against 532 µs on the
    engine benchmark, while the *memoized* row is faster than Phase 0's. See
    [`../phase-1/03-findings.md`](../phase-1/03-findings.md#throughput-an-unresolved-discrepancy).
    **No throughput number should be published until this is resolved.**
