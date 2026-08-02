@@ -1,19 +1,24 @@
 # Publish.
 #
-# **This workflow is not yet usable and fails early and loudly if run.**
-# `napi.packageName` is now set and the platform package dirs are generated, so
-# what remains is that `@emquad/typst-binding` is still `private` and does not
-# yet declare its `optionalDependencies`. See `.claude/phase-3/05-handoff.md`.
+# Live since 0.0.1. Every preflight condition below is now satisfied, so this
+# runs end to end; it is kept as a gate because each check corresponds to a way
+# the first publish actually went wrong.
 #
-# That last step is deliberately *not* done yet, and the reason is a hard
-# ordering constraint rather than an oversight: pnpm silently excludes an
-# optional dependency it cannot resolve and never records it in the lockfile, so
-# declaring `optionalDependencies` on packages that are not in a registry yet
-# makes `pnpm install --frozen-lockfile` fail in every CI job, permanently. The
-# platform packages have to be published first.
+# **The bootstrap is not this workflow.** 0.0.1 was published by
+# `scripts/initial-publish.sh`, run from a laptop, and that ordering is forced
+# rather than chosen: pnpm silently excludes an optional dependency it cannot
+# resolve and never records it in the lockfile, so declaring
+# `optionalDependencies` on packages no registry serves makes
+# `pnpm install --frozen-lockfile` fail in every CI job, permanently. The
+# platform packages must exist in the registry before anything can depend on
+# them — which means the first publish cannot be done by a workflow that
+# installs the workspace first. npm trusted publishing has the same
+# chicken-and-egg problem: OIDC cannot publish a package that does not yet
+# exist (npm/cli#8544).
 #
-# It is committed unfinished because the ordering constraints below are the part
-# that is easy to get wrong and expensive to discover after the fact.
+# Consequence for anyone adding a *new* platform package: it has to be published
+# out-of-band before it can be added to `optionalDependencies`, exactly as the
+# original eight were. See `.claude/phase-4/00-publishing.md`.
 
 name: Release
 
