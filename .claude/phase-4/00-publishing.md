@@ -170,6 +170,24 @@ The ordering constraint underneath is the one that forced a laptop script for
 `0.0.1`: **the platform packages must exist in the registry before anything can
 depend on them.**
 
+**The workflow had kept the all-or-nothing publish the bootstrap threw away.**
+`scripts/initial-publish.sh` was rewritten mid-bootstrap to publish the eight
+platform packages individually, skipping any already on the registry, because
+`napi pre-publish` shells out to `npm publish` for all of them and npm refuses
+to republish an existing version — a run that dies partway can never be
+restarted. `release.yml` still called `napi pre-publish`, where the consequence
+is worse: the OIDC step and the token fallback ran the *same* command, so a
+partial OIDC publish would make the fallback fail on the first already-published
+package and strand the release with no way out but a version bump.
+
+Now both paths call `scripts/publish-platform-packages.sh`, which is resumable
+the same way. Replacing napi's command means the two things it did on the way
+past have to be explicit: `napi artifacts` moves each binary into its
+`npm/<platform>/` directory beforehand — without it every platform package
+publishes with no `.node`, which installs cleanly and throws at require time on
+that platform only — and `sync-binding-optional-deps.mjs` rewrites the loader's
+`optionalDependencies` afterwards.
+
 ## Verified from the registry
 
 A clean `npm install @emquad/core @emquad/fonts` into an empty project, with no

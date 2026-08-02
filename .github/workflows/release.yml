@@ -231,11 +231,35 @@ jobs:
       # optionalDependencies that are not there yet and silently gets no native
       # binding. Republishing core does not repair an install that already
       # failed.
+      # Move each `packages/binding/emquad.<platform>.node` into its
+      # `npm/<platform>/` directory. `napi pre-publish` used to do this on the
+      # way past; publishing the directories individually means it has to be
+      # explicit. Without it every platform package publishes with no binary —
+      # which installs cleanly and throws "Cannot find native binding" at
+      # require time, on that platform only, permanently.
+      - name: Distribute the binaries into the platform packages
+        working-directory: packages/binding
+        run: pnpm exec napi artifacts --output-dir . --npm-dir npm
+
+      # Published one at a time, skipping anything already on the registry,
+      # rather than through `napi pre-publish`.
+      #
+      # `napi pre-publish` is **all-or-nothing**: it shells out to `npm publish`
+      # for every platform package, and npm refuses to republish an existing
+      # version — so a run that dies partway can never be restarted. That is not
+      # hypothetical, it is what happened during the `0.0.1` bootstrap, and
+      # `scripts/initial-publish.sh` was rewritten this way in response. The
+      # workflow kept the fragile call, which matters more here than it did
+      # there: the two steps below run the *same* command, so a partial OIDC
+      # publish would make the token fallback fail on the first already-published
+      # package and strand the release with no way forward but a version bump.
+      #
+      # The only thing napi does here that this does not is rewrite the loader's
+      # optionalDependencies, and the step after these does that anyway.
       - name: Publish platform packages (OIDC)
         id: platform_oidc
         continue-on-error: true
-        working-directory: packages/binding
-        run: pnpm exec napi pre-publish --npm-dir npm --tag-style npm
+        run: ./scripts/publish-platform-packages.sh
 
       - name: Publish platform packages (token fallback)
         if: steps.platform_oidc.outcome == 'failure'
@@ -248,7 +272,7 @@ jobs:
             exit 1
           fi
           echo "::warning::Published the platform packages with a long-lived token; OIDC did not succeed."
-          cd packages/binding && pnpm exec napi pre-publish --npm-dir npm --tag-style npm
+          ./scripts/publish-platform-packages.sh
 
       # **This is the only point at which the loader can name this release's
       # binaries.** `napi version` bumps the eight platform packages and leaves
