@@ -89,7 +89,11 @@ Typst is pre-1.0 and breaks on minor releases (see
   `THIRD-PARTY-NOTICES.md` is current — see [`../../LICENSING.md`](../../LICENSING.md)
 - Byte-identity test on the fonts shipped by `@emquad/fonts`; subsetting them would
   relicense that package as GPL-3 (hard rule 11)
-- Documented typst-version compatibility policy
+- ~~Documented typst-version compatibility policy~~ **Done** — README "Typst versions". The
+  runtime half was already there (`typstVersion()` is exported from `@emquad/core`); what was
+  missing was saying so anywhere a user would look, and stating that the pin is *static* —
+  there is no way to pair a given emquad with a different typst, because the compiler is inside
+  the binary rather than resolved at install time.
 - ~~Fold `spike/xtarget/sweep2.sh`'s `CC`/`CFLAGS`/`AR` environment into the matrix, then
   delete `spike/`.~~ **Done.** The matrix needed less of it than expected — eight shipping
   targets, of which only `aarch64-unknown-linux-musl` needs the explicit `CC_*`/`CXX_*` pair,

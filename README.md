@@ -4,9 +4,18 @@ A lean Node.js binding for [Typst](https://github.com/typst/typst) that does one
 **virtual filesystem in → PDF out.** Built as a fast, light replacement for Chromium +
 Puppeteer PDF pipelines.
 
-> **Status: work in progress. Nothing is published yet.**
-> The Rust core, the Node bindings, and the TypeScript packages are all built and tested.
-> What remains is distribution: prebuilt per-platform binaries and CI across the target matrix.
+> **Status: `0.0.1` is on npm.** Early, and versioned to say so.
+> Prebuilt binaries ship for eight platforms; `os`/`cpu` gating installs exactly one.
+> Verified end to end on `darwin-arm64` only — the other seven are published and correctly
+> gated, but none has been installed on its own platform.
+
+```sh
+npm install @emquad/core @emquad/fonts
+```
+
+`@emquad/fonts` is optional. Without it you supply your own font bytes — and you must supply
+some, because typst compiles an empty font set into a valid PDF with every text run silently
+dropped, so `Compiler` rejects it outright.
 
 ```ts
 import { Compiler } from "@emquad/core";
@@ -30,7 +39,7 @@ const { pdf, warnings } = await compiler
 | `packages/core/` | `@emquad/core` — the public API, both pools, `EmquadError`. **Done** |
 | `packages/resolver/` | `@emquad/resolver` — `@preview` packages. Zero runtime deps. **Done** |
 | `packages/fonts/` | `@emquad/fonts` — 17 default faces, four licenses. **Done** |
-| `packages/binding/` | The built addon and its generated bindings. Internal, not published |
+| `packages/binding/` | `@emquad/typst-binding` — the napi loader, plus eight platform packages |
 | `scripts/` | Dependency guard and benchmark comparison harness |
 | `.claude/` | Plan, research, and phase documentation |
 
@@ -75,6 +84,30 @@ permanently and aborts the process at around 65k renders.
 *slower* as threads are added — and `pool: { mode: "process" }` is 6.9× faster. Process mode is
 also the only way to survive an untrusted template, since typst has no cancellation hook.
 Measurements in [`.claude/phase-3/03-findings.md`](.claude/phase-3/03-findings.md).
+
+## Typst versions
+
+**This release compiles with Typst 0.15.1**, pinned exactly (`=0.15.1`) and statically linked.
+There is no way to pair a given emquad with a different typst — the compiler is inside the
+binary, not resolved at install time.
+
+Read it at runtime rather than inferring it from our version:
+
+```ts
+import { typstVersion } from "@emquad/core";
+
+typstVersion(); // "0.15.1"
+```
+
+That matters because typst's own output changes between releases. If a document renders
+differently than it used to, the typst version is the first thing to check, and it is the thing
+to record alongside any golden file or visual-regression baseline you keep.
+
+**A typst minor bump is a minor bump of emquad**, called out in the changelog. Typst is pre-1.0
+and genuinely breaks across minor releases — `FileId::new` and `VirtualPath::new` both changed
+signature in 0.15 — so these upgrades are deliberate and reviewed, never automatic. Dependabot
+is configured not to open them. Expect rendering differences across an emquad minor, and pin
+exactly if you depend on byte-identical output.
 
 ## License
 
