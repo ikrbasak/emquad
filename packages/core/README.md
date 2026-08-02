@@ -203,6 +203,28 @@ Record it alongside any golden file or visual baseline you keep: typst's output 
 releases, so it is the first thing to check when a document renders differently. **A typst minor
 bump is a minor bump of this package**, noted in the changelog and never automatic.
 
+## Against Puppeteer
+
+Measured on equivalent documents — same page size, same table, same font, same embedded logo —
+on an M1, at 4 workers. The harness is published in the repository so this can be checked or
+disputed.
+
+| Document | emquad | Puppeteer | |
+|---|---|---|---|
+| Invoice, 1 page | 1,312 docs/s | 51 docs/s | **25×** |
+| Report, 4–5 pages, 120 rows | 104 docs/s | 40 docs/s | **2.6×** |
+| RSS under load | 92 MiB | 1,445 MiB | **16× less** |
+| Cold start | 78 ms | 661 ms | |
+| p99 latency (invoice) | 4.8 ms | 97.4 ms | |
+
+**The ratio depends entirely on the document, so take the second row as the honest one for
+report-shaped work.** Chromium's per-document fixed cost — `setContent`, style recalculation, the
+print path — is what emquad avoids, so the advantage is largest on small documents and narrows as
+real typesetting comes to dominate. Normalized per page, the report row is ~2.1×.
+
+The memory difference is usually the one that changes decisions: **an idle Chromium costs more
+than emquad under full load.** That is what sizes your containers.
+
 ## Migrating from Puppeteer
 
 Realistically: the pipeline gets simpler and faster, and the templates get rewritten.

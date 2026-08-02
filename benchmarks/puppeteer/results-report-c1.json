@@ -1,0 +1,31 @@
+{
+  "document": "report",
+  "docs": 60,
+  "concurrency": 1,
+  "node": "v26.5.1",
+  "platform": "darwin/arm64",
+  "results": [
+    {
+      "engine": "emquad",
+      "coldStartMs": 24.949958,
+      "docsPerSec": 45.84018616102994,
+      "meanMs": 21.811413216666658,
+      "p50Ms": 21.204124999999976,
+      "p99Ms": 36.61991699999999,
+      "rssAtRestMib": 99.25,
+      "rssUnderLoadMib": 266.484375
+    },
+    {
+      "engine": "puppeteer",
+      "coldStartMs": 546.144042,
+      "docsPerSec": 12.90802548778612,
+      "meanMs": 77.46916456666666,
+      "p50Ms": 76.8737500000002,
+      "p99Ms": 86.99379099999987,
+      "rssAtRestMib": 848.171875,
+      "rssUnderLoadMib": 1022.8125,
+      "browser": "Chrome/146.0.7680.177"
+    }
+  ],
+  "speedup": 3.5512934340271496
+}

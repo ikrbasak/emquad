@@ -1,0 +1,6 @@
+# Generated PDFs from verify.js — regenerate them, do not review them in diffs.
+out/
+
+# The measured results are committed on purpose: a benchmark whose numbers
+# cannot be checked against the harness that produced them is an assertion.
+!results-*.json

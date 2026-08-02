@@ -1,0 +1,31 @@
+{
+  "document": "invoice",
+  "docs": 40,
+  "concurrency": 2,
+  "node": "v26.5.1",
+  "platform": "darwin/arm64",
+  "results": [
+    {
+      "engine": "emquad",
+      "coldStartMs": 9.213084000000002,
+      "docsPerSec": 857.0135460418101,
+      "meanMs": 2.324184400000001,
+      "p50Ms": 2.2761249999999933,
+      "p99Ms": 2.73491700000001,
+      "rssAtRestMib": 90.40625,
+      "rssUnderLoadMib": 91.453125
+    },
+    {
+      "engine": "puppeteer",
+      "coldStartMs": 558.754125,
+      "docsPerSec": 30.577454268311612,
+      "meanMs": 65.03100417499998,
+      "p50Ms": 64.07508400000006,
+      "p99Ms": 86.11458300000004,
+      "rssAtRestMib": 932.03125,
+      "rssUnderLoadMib": 1090.578125,
+      "browser": "Chrome/146.0.7680.177"
+    }
+  ],
+  "speedup": 28.0276290668828
+}

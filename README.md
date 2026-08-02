@@ -41,6 +41,7 @@ const { pdf, warnings } = await compiler
 | `packages/fonts/` | `@emquad/fonts` — 17 default faces, four licenses. **Done** |
 | `packages/binding/` | `@emquad/typst-binding` — the napi loader, plus eight platform packages |
 | `scripts/` | Dependency guard and benchmark comparison harness |
+| `benchmarks/` | The Puppeteer comparison. Outside the workspace on purpose |
 | `.claude/` | Plan, research, and phase documentation |
 
 ## Getting oriented
@@ -71,6 +72,22 @@ Requires Node ≥ 22.
 
 The first build takes several minutes: 293 crates, and the release profile uses `lto = true`
 with `codegen-units = 1`. Turbo caches the result, so later runs skip it.
+
+## Against Puppeteer
+
+On equivalent documents, M1, 4 workers — harness in [`benchmarks/puppeteer/`](benchmarks/puppeteer/):
+
+| Document | emquad | Puppeteer | |
+|---|---|---|---|
+| Invoice, 1 page | 1,312 docs/s | 51 docs/s | **25×** |
+| Report, 4–5 pages, 120 rows | 104 docs/s | 40 docs/s | **2.6×** |
+| RSS under load | 92 MiB | 1,445 MiB | **16× less** |
+
+**Which end of that range you get depends on the document**, and the honest summary is "2× to
+25×, narrowing as the document gets heavier" — Chromium's per-document fixed cost is what emquad
+avoids. Typst is *not* an HTML renderer, so migrating means rewriting templates; that cost is
+real and the benchmark does not measure it. Full numbers and caveats in
+[`.claude/phase-5/01-puppeteer.md`](.claude/phase-5/01-puppeteer.md).
 
 ## Two things worth knowing
 

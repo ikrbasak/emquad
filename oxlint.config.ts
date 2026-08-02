@@ -45,6 +45,11 @@ export default defineConfig({
         "**/*.test.ts",
         "**/*.test.js",
         "**/bench/**",
+        // The Puppeteer comparison. Same category as `bench/`, but it lives
+        // outside the pnpm workspace so that Puppeteer can never become a
+        // dependency of a published package — which also puts it outside the
+        // glob above.
+        "benchmarks/**",
         // Maintenance scripts: run by hand, and reporting what they did is the
         // whole point of them.
         "**/scripts/**",
