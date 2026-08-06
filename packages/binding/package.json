@@ -36,7 +36,7 @@
     "test": "npm run build:test && node --test \"test/*.test.js\""
   },
   "devDependencies": {
-    "@napi-rs/cli": "^3.8.0"
+    "@napi-rs/cli": "^3.8.2"
   },
   "optionalDependencies": {
     "@emquad/typst-binding-darwin-arm64": "0.0.1",
